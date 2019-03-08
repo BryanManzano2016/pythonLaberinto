@@ -18,6 +18,18 @@ class Game:
 
         self.score = 0
 
+    def clean(self, clean_pos):
+        pygame.draw.rect(
+            self.display,
+            Config['colors']['black'],
+            [
+                clean_pos[0],
+                clean_pos[1],
+                Config['game']['square_size'],
+                Config['game']['square_size']
+            ]
+        )
+
     def loop(self):
 
         clock = pygame.time.Clock()
@@ -27,26 +39,24 @@ class Game:
         count_sq = 0
 
         #Posiciones jugables
-        posx_square = [e for e in range(self.bumper,
+
+        positions_free = [ [e, f] for e in range(self.bumper,
                                         self.width_able - self.bumper + self.square_size * 3,
-                                        self.square_size)]
-        posy_square = [e for e in range(self.bumper,
+                                        self.square_size)
+                          for f in range(self.bumper,
                                         self.height_able - self.bumper + self.square_size * 3,
                                         self.square_size)]
 
         #Creacion y ubicacion de jugadores y meta
-        posxP_random = random.choice(posx_square)
-        posyP_random = random.choice(posy_square)
-        positions.append([posxP_random, posyP_random])
-        player_1 = Player(self.display, posxP_random, posyP_random)
+        # dsadd
+        posP = random.choice(positions_free)
+        positions_free.remove(posP)
+        player_1 = Player(self.display, posP)
 
-        posxW_random = random.choice(posx_square)
-        posyW_random = random.choice(posy_square)
-        positions.append([posxW_random, posyW_random])
-        pointWin = PointWin(self.display, posxW_random, posyW_random)
-
-        x_change = 0
-        y_change = 0
+        posW = random.choice(positions_free)
+        positions_free.remove(posW)
+        positions.append(posW)
+        pointWin = PointWin(self.display, posW)
 
         # Fill background and draw game area
         self.display.fill(Config['colors']['green'])
@@ -65,12 +75,11 @@ class Game:
 
         while count_sq < Config['game']['number_squares']:
 
-            posx_random = random.choice(posx_square)
-            posy_random = random.choice(posy_square)
+            posObj = random.choice(positions_free)
+            positions_free.remove(posObj)
+            positions.append(posObj)
 
-            if [posx_random, posy_random] not in positions:
-                positions.append([posx_random, posy_random])
-                count_sq += 1
+            count_sq += 1
 
         for x in positions:
             pygame.draw.rect(
@@ -85,7 +94,7 @@ class Game:
             )
 
         while True:
-            #sleep(1)
+
             for event in pygame.event.get():
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
@@ -93,23 +102,37 @@ class Game:
 
                 # Si se presiona una tecla
                 if event.type == pygame.KEYDOWN:
+
+                    soon_pos = [player_1.get_posx(), player_1.get_posy()]
+                    old_pos = soon_pos[:]
+
                     if event.key == pygame.K_LEFT:
-                        x_change = -self.square_size
-                        y_change = 0
+                        soon_pos[0] += -self.square_size
+                        if soon_pos in positions_free:
+                            player_1.move(soon_pos)
+                            self.clean(old_pos)
+
                     elif event.key == pygame.K_RIGHT:
-                        x_change = self.square_size
-                        y_change = 0
+                        soon_pos[0] += self.square_size
+                        if soon_pos not in positions:
+                            player_1.move(soon_pos)
+                            self.clean(old_pos)
+
                     elif event.key == pygame.K_UP:
-                        x_change = 0
-                        y_change = -self.square_size
+                        soon_pos[1] += -self.square_size
+                        if soon_pos not in positions:
+                            player_1.move(soon_pos)
+                            self.clean(old_pos)
+
                     elif event.key == pygame.K_DOWN:
-                        x_change = 0
-                        y_change = self.square_size
+                        soon_pos[1] += self.square_size
+                        if soon_pos not in positions:
+                            player_1.move(soon_pos)
+                            self.clean(old_pos)
 
             # Draw an jugador
             point_rect = pointWin.draw()
 
-            player_1.move(x_change, y_change, positions)
             player_rect = player_1.draw()
 
             # Detect collision with point of wein

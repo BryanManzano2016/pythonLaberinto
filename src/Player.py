@@ -4,9 +4,9 @@ import random
 from src.Config import Config
 
 class Player:
-    def __init__(self, display, pos_x, pos_y):
-        self.x_pos = pos_x
-        self.y_pos = pos_y
+    def __init__(self, display, posP):
+        self.x_pos = posP[0]
+        self.y_pos = posP[1]
         self.display = display
 
     def draw(self):
@@ -21,19 +21,22 @@ class Player:
             ]
         )
 
-    def move(self, x_change, y_change, pos_free):
-        if [self.x_pos] not in pos_free:
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['black'],
-                [
-                    self.x_pos,
-                    self.y_pos,
-                    Config['game']['square_size'],
-                    Config['game']['square_size']
-                ]
-            )
-            self.x_pos += x_change
-            self.y_pos += y_change
+    def move(self, soon_pos):
+        pygame.draw.rect(
+            self.display,
+            Config['colors']['black'],
+            [
+                soon_pos[0],
+                soon_pos[1],
+                Config['game']['square_size'],
+                Config['game']['square_size']
+            ]
+        )
+        self.x_pos = soon_pos[0]
+        self.y_pos = soon_pos[1]
 
+    def get_posx(self):
+        return self.x_pos
 
+    def get_posy(self):
+        return self.y_pos

@@ -5,9 +5,9 @@ from src.Config import Config
 
 
 class PointWin:
-    def __init__(self, display, pos_x, pos_y):
-        self.x_pos = pos_x
-        self.y_pos = pos_y
+    def __init__(self, display, posW):
+        self.x_pos = posW[0]
+        self.y_pos = posW[1]
         self.display = display
 
     # Retorna un rectangulo

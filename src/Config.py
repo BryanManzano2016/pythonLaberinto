@@ -6,7 +6,7 @@ Config = {
         'fps': 45,
         'bumper_size': 30,
         'square_size': 10,
-        'number_squares': 50
+        'number_squares': 400
     },
     'colors': {
         'white': (255, 255, 255),
