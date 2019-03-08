@@ -1,5 +1,4 @@
 import pygame
-import random
 
 from src.Config import Config
 
@@ -21,19 +20,26 @@ class Player:
             ]
         )
 
-    def move(self, soon_pos):
+    def move(self, change_pos):
+
         pygame.draw.rect(
             self.display,
-            Config['colors']['black'],
+            Config['colors']['white'],
             [
-                soon_pos[0],
-                soon_pos[1],
+                self.x_pos,
+                self.y_pos,
                 Config['game']['square_size'],
                 Config['game']['square_size']
             ]
         )
-        self.x_pos = soon_pos[0]
-        self.y_pos = soon_pos[1]
+        self.x_pos += change_pos[0]
+        self.y_pos += change_pos[1]
+
+    def movimientoValido(self, change_pos, pos):
+        if [self.x_pos + change_pos[0], self.y_pos + change_pos[1]] in pos:
+            return True
+        else:
+            return False
 
     def get_posx(self):
         return self.x_pos

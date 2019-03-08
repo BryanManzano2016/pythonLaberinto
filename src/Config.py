@@ -1,12 +1,12 @@
 Config = {
     'game': {
         'caption': 'Laberinto',
-        'height': 560,
-        'width': 560,
+        'height': 680,
+        'width': 980,
         'fps': 45,
         'bumper_size': 30,
         'square_size': 10,
-        'number_squares': 400
+        'number_squares': 1000
     },
     'colors': {
         'white': (255, 255, 255),
@@ -14,6 +14,7 @@ Config = {
         'green': (0, 100, 0),
         'red': (100, 0, 0),
         'yellow': (255, 255, 0),
-        'blue': (0, 0, 255)
+        'blue': (0, 0, 255),
+        'orange': (255,165,0)
     }
 }

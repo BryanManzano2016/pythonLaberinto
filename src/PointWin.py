@@ -1,4 +1,3 @@
-import random
 import pygame
 
 from src.Config import Config
@@ -14,7 +13,7 @@ class PointWin:
     def draw(self):
         return pygame.draw.rect(
             self.display,
-            Config['colors']['white'],
+            Config['colors']['orange'],
             [
                 self.x_pos,
                 self.y_pos,
