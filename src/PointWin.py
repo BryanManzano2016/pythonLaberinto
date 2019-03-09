@@ -11,7 +11,7 @@ class PointWin:
 
     # Retorna un rectangulo
     def draw(self):
-        return pygame.draw.rect(
+        pygame.draw.rect(
             self.display,
             Config['colors']['orange'],
             [

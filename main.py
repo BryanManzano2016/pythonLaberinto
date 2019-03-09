@@ -1,4 +1,5 @@
 import pygame
+from src import Config
 from src.Game import *
 
 def main():
@@ -11,7 +12,6 @@ def main():
     pygame.display.set_caption(Config['game']['caption'])
 
     game = Game(display)
-    game.loop()
 
 if __name__ == '__main__':
     main()

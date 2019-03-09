@@ -9,7 +9,7 @@ class Player:
         self.display = display
 
     def draw(self):
-        return pygame.draw.rect(
+        pygame.draw.rect(
             self.display,
             Config['colors']['blue'],
             [
