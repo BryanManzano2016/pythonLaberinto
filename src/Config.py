@@ -6,7 +6,9 @@ Config = {
         'fps': 45,
         'bumper_size': 30,
         'square_size': 10,
-        'number_squares': 1000
+        'number_squares': 1000,
+        'width_button': 300,
+        'height_button': 100
     },
     'colors': {
         'white': (255, 255, 255),

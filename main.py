@@ -1,6 +1,7 @@
 import pygame
 from src import Config
 from src.Game import *
+import menu
 
 def main():
     #Dimensiones de la pantalla
@@ -8,10 +9,10 @@ def main():
         Config['game']['width'],
         Config['game']['height']
     ))
-    #Tituto
+    #Titulo
     pygame.display.set_caption(Config['game']['caption'])
 
-    game = Game(display)
+    menus = menu.Menu(display)
 
 if __name__ == '__main__':
     main()

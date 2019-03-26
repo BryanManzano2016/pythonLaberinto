@@ -1,8 +1,7 @@
 import pygame
-from src.Config import Config
-import socket
-import json
-from time import sleep
+from src import pygame_textinput
+from src.Config import *
+import menu_play
 
 class Menu:
 
@@ -14,16 +13,22 @@ class Menu:
         self.height_total = Config['game']['height']
         self.height_able = Config['game']['height'] - Config['game']['bumper_size'] * 1
         self.square_size = Config['game']['square_size']
+        self.height_button = Config['game']['height_button']
+        self.width_button = Config['game']['width_button']
 
         self.menu_main()
 
     def menu_main(self):
 
         clock = pygame.time.Clock()
+        # Input inicializado
+        textinput = pygame_textinput.TextInput()
 
         while True:
 
-            for event in pygame.event.get():
+            events = pygame.event.get()
+
+            for event in events:
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
                     exit()
@@ -31,59 +36,143 @@ class Menu:
                 # Si se presiona una tecla
                 if event.type == pygame.KEYDOWN:
                     pass
+                # Por cada evento alimenta al input
+                textinput.update(events)
+
+                # posiciones de mouse y clicks
+                mouse = pygame.mouse.get_pos()
+                click = pygame.mouse.get_pressed()
+
+                self.buttons_click((self.width_total / 2) - (self.width_button / 2),
+                              (self.height_total / 4) - (self.height_button / 1.5),
+                              self.width_button,
+                              50,
+                              mouse,
+                              click,
+                              "0")
+
+                self.buttons_click((self.width_total / 2) - (self.width_button / 2),
+                    (self.height_total / 2) + self.height_button,
+                    self.width_button,
+                    50,
+                    mouse,
+                    click,
+                    textinput.get_text())
 
             # Fill background and draw game area
             self.display.fill(Config['colors']['green'])
 
-            # Feed it with events every frame
-            textinput.update(events)
-            # Blit its surface onto the screen
-            self.blit(textinput.get_surface(), (10, 10))
-
-            # Rectangulo blanco de juego
-            '''
+            # Rectangulo blanco para invitado
             pygame.draw.rect(
                 self.display,
                 Config['colors']['white'],
                 [
-                    self.square_size,
-                    self.square_size,
-                    self.width_able,
-                    self.height_able
+                    (self.width_total / 2) - self.width_button,
+                    (self.height_total / 4) - self.height_button,
+                    self.width_button * 2,
+                    self.height_button
                 ]
             )
-            '''
-            # Initialize font and draw title and score text
-            pygame.font.init()
+            # Rectangulo para boton invitado
+            pygame.draw.rect(
+                self.display,
+                Config['colors']['blue'],
+                [
+                    (self.width_total / 2) - (self.width_button / 2),
+                    (self.height_total / 4) - (self.height_button / 1.5),
+                    self.width_button,
+                    50
+                ]
+            )
 
+            # Rectangulo blanco para login
+            pygame.draw.rect(
+                self.display,
+                Config['colors']['white'],
+                [
+                    (self.width_total / 2) - self.width_button,
+                    (self.height_total / 2)  - self.height_button,
+                    self.width_button * 2,
+                    self.height_button * 3
+                ]
+            )
+            # Rectangulo azul para datos
+            pygame.draw.rect(
+                self.display,
+                Config['colors']['blue'],
+                [
+                    (self.width_total / 2) - self.width_button,
+                    (self.height_total / 2) + 25,
+                    self.width_button * 2,
+                    50
+                ]
+            )
+
+            # Rectangulo azul para boton login
+            pygame.draw.rect(
+                self.display,
+                Config['colors']['blue'],
+                [
+                    (self.width_total / 2) - (self.width_button / 2),
+                    (self.height_total / 2)  + self.height_button,
+                    self.width_button,
+                    50
+                ]
+            )
+
+            # Initialize font and draw
+            pygame.font.init()
             font = pygame.font.SysFont(pygame.font.get_default_font(), 30)
 
-            score_text = 'Puntuacion: {}'.format(2)
-            score = font.render(score_text, False, Config['colors']['white'])
-            title = font.render('LABERINTO', False, Config['colors']['white'])
+            # textos
+            invitado_text = font.render("INVITADO", False, Config['colors']['white'])
+            login_text = font.render('LOGIN', False, Config['colors']['white'])
+            datos_text = font.render('DATOS(user,password):', False, Config['colors']['red'])
 
-            title_rect = title.get_rect(
+            invitado_text_rect = invitado_text.get_rect(
                 center=(
-                    self.width_able + (self.width_total - self.width_able)/2,
-                    100
+                    (self.width_total / 2) + 10,
+                    (self.height_total / 4) - 40,
                 )
             )
 
-            score_rect = score.get_rect(
+            datos_text_rect = login_text.get_rect(
                 center=(
-                    self.width_able + (self.width_total - self.width_able)/2,
-                    200
+                    (self.width_total / 2) - 60,
+                    (self.height_total / 2) + self.height_button - 100,
                 )
             )
 
-            self.display.blit(score, score_rect)
-            self.display.blit(title, title_rect)
+            login_text_rect = login_text.get_rect(
+                center=(
+                    (self.width_total / 2) + 10,
+                    (self.height_total / 2) + self.height_button + 25,
+                )
+            )
+
+            self.display.blit(invitado_text, invitado_text_rect)
+            self.display.blit(datos_text, datos_text_rect)
+            self.display.blit(login_text, login_text_rect)
+
+            # Muestra input
+            self.display.blit(textinput.get_surface(), ( (self.width_total / 2) - (self.width_button / 2),
+                (self.height_total / 2) + 35) )
 
             pygame.display.update()
             clock.tick(Config['game']['fps'])
 
-def lists():
-    HOST = '127.0.0.1'
-    PORT = 60000
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect((HOST, PORT))
+
+    def buttons_click(self, x, y, wd, hg, mouse, click, data):
+
+        if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
+
+            if click[0] == 1 and data == "0":
+                menu_plays = menu_play.Menu_play(self.display, "invit")
+            elif click[0] == 1 and data != "":
+                menu_plays = menu_play.Menu_play(self.display, "multi")
+
+def function_inv():
+    print("inv")
+
+def function_log(data):
+    print(data)
