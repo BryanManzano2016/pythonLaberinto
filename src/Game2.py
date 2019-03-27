@@ -4,8 +4,11 @@ from src.PointWin import PointWin
 from src.Config import Config
 import socket
 import json
+import time
 
 # Modo UP de un solo jugador
+HOST = '127.0.0.1'
+PORT = 60000
 
 class Game2:
 
@@ -21,6 +24,8 @@ class Game2:
         self.data = data_g
         self.score = 0
         self.segundo = 0
+
+        self.user = self.player_dict()
 
         self.loop()
 
@@ -51,7 +56,7 @@ class Game2:
                 segundo_ant = segundo_act
                 self.segundo += 1
             #El contador global de segundos llega a 30 y reinicia la partida
-            if self.segundo == 5:
+            if self.segundo >= 30:
                 self.segundo = 0
                 self.loop()
 
@@ -60,6 +65,7 @@ class Game2:
             for event in pygame.event.get():
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
+                    self.send_record()
                     exit()
 
                 # Si se presiona una tecla
@@ -110,12 +116,14 @@ class Game2:
 
             for playerN in range(1):
 
+                # Si no puede acceder a la posicion -> continue
                 if (players[playerN].movimientoValido(pos_change[playerN], positions) or not
                         players[playerN].movimientoValido(pos_change[playerN], positions_free)):
                     continue
-
+                # Mueve a la posicion
                 players[playerN].move(pos_change[playerN])
 
+                # Si gana la partida
                 if [players[playerN].get_posx(), players[playerN].get_posy()] == posW:
                     self.score += 1
                     self.segundo = 0
@@ -154,9 +162,35 @@ class Game2:
             pygame.display.update()
             clock.tick(Config['game']['fps'])
 
+    def player_dict(self):
+        # Extrae la data del self.user
+        user_pass = str(self.data).split(",")
+        user = {
+            "user_s" : user_pass[0],
+            "pass_s" : user_pass[1]
+        }
+        return user
+
+    def send_record(self):
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            sock.send( "send_points".encode() )
+
+            time.sleep(1)
+
+            datos = {
+                "user_s": self.user["user_s"],
+                "pass_s": self.user["pass_s"],
+                "record": self.score
+            }
+
+            datos_serial = json.dumps(datos)
+            sock.sendall(datos_serial.encode())
+
 def lists():
-    HOST = '127.0.0.1'
-    PORT = 60000
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
 
@@ -169,6 +203,6 @@ def lists():
                 break
             data_all += data
         from_js = json.loads(data_all)
-    sock.close()
+
     return from_js["positions_free"], from_js["positions"], from_js["pos"]
 

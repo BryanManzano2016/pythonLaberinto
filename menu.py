@@ -3,6 +3,9 @@ from src import pygame_textinput
 from src.Config import *
 import menu_play
 import menu_play3
+import socket
+import json
+import time
 
 '''
 Boton invitado: Solo puede jugar partidas only-player 
@@ -57,13 +60,15 @@ class Menu:
                               click,
                               "0")
 
+                data_u = textinput.get_text()
+
                 self.buttons_click((self.width_total / 2) - (self.width_button / 2),
                     (self.height_total / 2) + self.height_button,
                     self.width_button,
                     50,
                     mouse,
                     click,
-                    textinput.get_text())
+                    data_u)
 
             # Fill background and draw game area
             self.display.fill(Config['colors']['green'])
@@ -173,12 +178,34 @@ class Menu:
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
             if click[0] == 1 and data == "0":
-                menu_plays = menu_play3.Menu_play(self.display)
+                menu_play3.Menu_play(self.display)
+
             elif click[0] == 1 and data != "":
-                menu_plays = menu_play.Menu_play(self.display, data)
+                if verificar_user(data):
+                    menu_play.Menu_play(self.display, data)
 
-def function_inv():
-    print("inv")
+def verificar_user(data):
+    HOST = '127.0.0.1'
+    PORT = 60000
 
-def function_log(data):
-    print(data)
+    user_pass = str(data).split(",")
+    user = {"user_s": user_pass[0], "pass_s": user_pass[1]}
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((HOST, PORT))
+
+        sock.send( "verify_user".encode() )
+
+        time.sleep(1)
+
+        datos_serial = json.dumps(user)
+        sock.sendall(datos_serial.encode())
+
+        data_all = sock.recv(4096).decode()
+
+        print(data_all)
+
+        if data_all == "ok":
+            return True
+        else:
+            return False

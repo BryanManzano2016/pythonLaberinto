@@ -10,7 +10,7 @@ from src.Game3 import *
 
 class Menu_play:
 
-    def __init__(self, display, modo, data = ""):
+    def __init__(self, display, data):
 
         self.display = display
         self.width_total = Config['game']['width']
