@@ -5,9 +5,11 @@ from src.Config import Config
 import socket
 import json
 
+# Modo UP de un solo jugador
+
 class Game2:
 
-    def __init__(self, display):
+    def __init__(self, display, data_g):
 
         self.display = display
         self.width_total = Config['game']['width']
@@ -16,7 +18,9 @@ class Game2:
         self.height_able = Config['game']['height'] - Config['game']['bumper_size'] * 1
         self.square_size = Config['game']['square_size']
 
+        self.data = data_g
         self.score = 0
+        self.segundo = 0
 
         self.loop()
 
@@ -33,10 +37,23 @@ class Game2:
         players = list()
         players.append(player_1)
 
-        posW = pos_m[2]
+        posW = pos_m[1]
         pointWin = PointWin(self.display, posW)
 
+        # Una copia del tiempo transcurrido
+        segundo_ant = -2
+
         while True:
+            # Segundos transcurriendo de haber iniciado pygame
+            segundo_act = int(pygame.time.get_ticks()) // 1000
+            # Si la copia y los segundos actuales son diferentes
+            if segundo_act != segundo_ant:
+                segundo_ant = segundo_act
+                self.segundo += 1
+            #El contador global de segundos llega a 30 y reinicia la partida
+            if self.segundo == 5:
+                self.segundo = 0
+                self.loop()
 
             pos_change = [[0, 0], [0, 0]]
 
@@ -101,6 +118,7 @@ class Game2:
 
                 if [players[playerN].get_posx(), players[playerN].get_posy()] == posW:
                     self.score += 1
+                    self.segundo = 0
                     self.loop()
 
                 players[playerN].draw()
@@ -141,6 +159,9 @@ def lists():
     PORT = 60000
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
+
+        sock.sendall( "create_pos".encode() )
+
         data_all = ""
         while True:
             data = sock.recv(4096).decode()
@@ -150,3 +171,4 @@ def lists():
         from_js = json.loads(data_all)
     sock.close()
     return from_js["positions_free"], from_js["positions"], from_js["pos"]
+

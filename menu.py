@@ -2,6 +2,12 @@ import pygame
 from src import pygame_textinput
 from src.Config import *
 import menu_play
+import menu_play3
+
+'''
+Boton invitado: Solo puede jugar partidas only-player 
+Boton multijugador: Ingresa user-password y puede jugar only-player o multijugador 
+'''
 
 class Menu:
 
@@ -167,9 +173,9 @@ class Menu:
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
             if click[0] == 1 and data == "0":
-                menu_plays = menu_play.Menu_play(self.display, "invit")
+                menu_plays = menu_play3.Menu_play(self.display)
             elif click[0] == 1 and data != "":
-                menu_plays = menu_play.Menu_play(self.display, "multi")
+                menu_plays = menu_play.Menu_play(self.display, data)
 
 def function_inv():
     print("inv")

@@ -1,16 +1,10 @@
 import pygame
 from src import Config
-from src.Game import *
-from src.Game2 import *
 from src.Game3 import *
-
-'''
--Se observaran los botones de play y multijugador
-'''
 
 class Menu_play:
 
-    def __init__(self, display, modo, data = ""):
+    def __init__(self, display):
 
         self.display = display
         self.width_total = Config['game']['width']
@@ -20,8 +14,6 @@ class Menu_play:
         self.square_size = Config['game']['square_size']
         self.height_button = Config['game']['height_button']
         self.width_button = Config['game']['width_button']
-
-        self.data = data
 
         self.menu_main()
 
@@ -47,13 +39,6 @@ class Menu_play:
                 click = pygame.mouse.get_pressed()
 
                 self.buttons_click((self.width_total / 2) - (self.width_button / 2),
-                    (self.height_total / 2) - self.height_button + 20,
-                    self.width_button,
-                    50,
-                    mouse,
-                    click)
-
-                self.buttons_click_i((self.width_total / 2) - (self.width_button / 2),
                               (self.height_total / 4) - (self.height_button / 1.5),
                               self.width_button,
                               50,
@@ -101,57 +86,15 @@ class Menu_play:
                 )
             )
 
-            # Rectangulo blanco para multiplayer
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['white'],
-                [
-                    (self.width_total / 2) - self.width_button,
-                    (self.height_total / 2) - self.height_button,
-                    self.width_button * 2,
-                    self.height_button
-                ]
-            )
-
-            # Rectangulo azul para boton multiplayer
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['blue'],
-                [
-                    (self.width_total / 2) - (self.width_button / 2),
-                    (self.height_total / 2) - self.height_button + 20,
-                    self.width_button,
-                    50
-                ]
-            )
-
-            multiplayer_text = font.render('MULTIPLAYER', False, Config['colors']['white'])
-
-            multiplayer_text_rect = multiplayer_text.get_rect(
-                center=(
-                    (self.width_total / 2) + 15,
-                    (self.height_total / 2) - self.height_button + 40
-                )
-            )
-
-            self.display.blit(multiplayer_text, multiplayer_text_rect)
-
             self.display.blit(play_text, play_text_rect)
 
             pygame.display.update()
             clock.tick(Config['game']['fps'])
-
 
     def buttons_click(self, x, y, wd, hg, mouse, click):
 
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
             if click[0] == 1:
-                game = Game(self.display, self.data)
+                game = Game3(self.display)
 
-    def buttons_click_i(self, x, y, wd, hg, mouse, click):
-
-        if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
-
-            if click[0] == 1:
-                game = Game2(self.display, self.data)

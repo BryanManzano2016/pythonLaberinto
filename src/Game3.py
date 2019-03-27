@@ -5,11 +5,11 @@ from src.Config import Config
 import socket
 import json
 
-# Modo multijugador
+# Modo invitado
 
-class Game:
+class Game3:
 
-    def __init__(self, display, data_g):
+    def __init__(self, display):
 
         self.display = display
         self.width_total = Config['game']['width']
@@ -18,7 +18,6 @@ class Game:
         self.height_able = Config['game']['height'] - Config['game']['bumper_size'] * 1
         self.square_size = Config['game']['square_size']
 
-        self.data = data_g
         self.score = 0
         self.segundo = 0
 
@@ -34,14 +33,11 @@ class Game:
         posP = pos_m[0]
         player_1 = Player(self.display, posP)
 
-        posP2 = pos_m[1]
-        player_2 = Player(self.display, posP2)
-
+        # Se puede añadir mas jugadores en players
         players = list()
         players.append(player_1)
-        players.append(player_2)
 
-        posW = pos_m[2]
+        posW = pos_m[1]
         pointWin = PointWin(self.display, posW)
 
         # Una copia del tiempo transcurrido
@@ -58,7 +54,9 @@ class Game:
             if self.segundo == 5:
                 self.segundo = 0
                 self.loop()
-            pos_change = [[0, 0], [0, 0]]
+
+            # Se puede añadir mas listas en pos_change para mas jugadores
+            pos_change = [[0, 0]]
 
             for event in pygame.event.get():
                 # Si se sale del programa
@@ -83,23 +81,6 @@ class Game:
                     elif event.key == pygame.K_DOWN:
                         pos_change[0][0] = 0
                         pos_change[0][1] += self.square_size
-
-                    #Player 2
-                    if event.key == pygame.K_a:
-                        pos_change[1][0] += -self.square_size
-                        pos_change[1][1] = 0
-
-                    elif event.key == pygame.K_d:
-                        pos_change[1][0] += self.square_size
-                        pos_change[1][1] = 0
-
-                    elif event.key == pygame.K_w:
-                        pos_change[1][0] = 0
-                        pos_change[1][1] += -self.square_size
-
-                    elif event.key == pygame.K_s:
-                        pos_change[1][0] = 0
-                        pos_change[1][1] += self.square_size
 
             # Fill background and draw game area
             self.display.fill(Config['colors']['green'])
@@ -128,7 +109,8 @@ class Game:
                     ]
                 )
 
-            for playerN in range(2):
+            # range tiene 1 porque solo hay 1 jugador en players
+            for playerN in range(1):
 
                 if (players[playerN].movimientoValido(pos_change[playerN], positions) or not
                         players[playerN].movimientoValido(pos_change[playerN], positions_free)):
@@ -138,6 +120,7 @@ class Game:
 
                 if [players[playerN].get_posx(), players[playerN].get_posy()] == posW:
                     self.score += 1
+                    self.segundo = 0
                     self.loop()
 
                 players[playerN].draw()
@@ -179,7 +162,7 @@ def lists():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
 
-        sock.sendall( "create_pos_multi".encode() )
+        sock.sendall( "create_pos".encode() )
 
         data_all = ""
         while True:
@@ -190,3 +173,4 @@ def lists():
         from_js = json.loads(data_all)
     sock.close()
     return from_js["positions_free"], from_js["positions"], from_js["pos"]
+
