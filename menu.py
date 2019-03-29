@@ -185,7 +185,7 @@ class Menu:
                     menu_play.Menu_play(self.display, data)
 
 def verificar_user(data):
-    HOST = '127.0.0.1'
+    HOST = '192.168.100.133'
     PORT = 60000
 
     user_pass = str(data).split(",")
@@ -202,8 +202,6 @@ def verificar_user(data):
         sock.sendall(datos_serial.encode())
 
         data_all = sock.recv(4096).decode()
-
-        print(data_all)
 
         if data_all == "ok":
             return True

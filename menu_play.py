@@ -147,11 +147,37 @@ class Menu_play:
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
             if click[0] == 1:
-                game = Game(self.display, self.data)
+                # Intenta conectar 2 jugadores
+                self.connect_player()
+                Game(self.display, self.player_dict())
+                print(self.player_dict())
 
     def buttons_click_i(self, x, y, wd, hg, mouse, click):
 
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
             if click[0] == 1:
-                game = Game2(self.display, self.data)
+                Game2(self.display, self.player_dict())
+
+    def player_dict(self):
+        # Extrae la data del self.user
+        user_pass = str(self.data).split(",")
+        user = {
+            "user_s" : user_pass[0],
+            "pass_s" : user_pass[1]
+        }
+        return user
+
+    # Envia peticion para jugar multiplayer
+    def connect_player(self):
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            sock.send( "connect_players".encode() )
+
+            time.sleep(1)
+
+            user_json = json.dumps(self.player_dict())
+
+            sock.sendall( user_json.encode() )

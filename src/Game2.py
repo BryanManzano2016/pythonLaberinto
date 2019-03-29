@@ -7,12 +7,12 @@ import json
 import time
 
 # Modo UP de un solo jugador
-HOST = '127.0.0.1'
+HOST = '192.168.100.133'
 PORT = 60000
 
 class Game2:
 
-    def __init__(self, display, data_g):
+    def __init__(self, display, user_g):
 
         self.display = display
         self.width_total = Config['game']['width']
@@ -21,11 +21,10 @@ class Game2:
         self.height_able = Config['game']['height'] - Config['game']['bumper_size'] * 1
         self.square_size = Config['game']['square_size']
 
-        self.data = data_g
         self.score = 0
         self.segundo = 0
 
-        self.user = self.player_dict()
+        self.user = user_g
 
         self.loop()
 
@@ -161,15 +160,6 @@ class Game2:
 
             pygame.display.update()
             clock.tick(Config['game']['fps'])
-
-    def player_dict(self):
-        # Extrae la data del self.user
-        user_pass = str(self.data).split(",")
-        user = {
-            "user_s" : user_pass[0],
-            "pass_s" : user_pass[1]
-        }
-        return user
 
     def send_record(self):
 

@@ -157,7 +157,7 @@ class Game3:
             clock.tick(Config['game']['fps'])
 
 def lists():
-    HOST = '127.0.0.1'
+    HOST = '192.168.100.133'
     PORT = 60000
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))

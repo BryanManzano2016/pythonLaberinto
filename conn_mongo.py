@@ -6,7 +6,7 @@ def view_user(from_clt):
 
     validar = False
     # Datos para conexion
-    myclient = pymongo.MongoClient('mongodb://localhost:27017/')
+    myclient = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
     mydb = myclient['players_laberinto']
     collection_mg = mydb["player"]
 
@@ -39,9 +39,6 @@ def view_record(from_clt):
         if from_clt["user_s"] == player["user"] and from_clt["pass_s"] == player["pass"]:
 
             if from_clt["record"] > player["record"]:
-
-                print(from_clt)
-                print(player)
 
                 myquery = {"user":from_clt["user_s"], "pass":from_clt["pass_s"]}
                 newvalues = {"$set": {"record": from_clt["record"]}}
