@@ -18,7 +18,7 @@ class Game:
         self.width_total = Config['game']['width']
         self.width_able = Config['game']['width'] - Config['game']['bumper_size']*15
         self.height_total = Config['game']['height']
-        self.height_able = Config['game']['height'] - Config['game']['bumper_size'] * 1
+        self.height_able = Config['game']['height'] - Config['game']['bumper_size']
         self.square_size = Config['game']['square_size']
 
         self.score = 0
@@ -27,6 +27,8 @@ class Game:
         self.num_match = None
         self.nro_player = None
         self.nro_oponent = None
+        self.user_player = None
+        self.user_oponent = None
 
         # Verifico el numero de partida,
         self.verify_multi_out()
@@ -50,15 +52,20 @@ class Game:
             posP2 = posit["positions_m"]["pos"][1]
             self.nro_player = "p1"
             self.nro_oponent = "p2"
+            self.user_player = posit["p1"]
+            self.user_oponent = posit["p2"]
+
         elif self.user["user_s"] == posit["p2"]:
             posP = posit["positions_m"]["pos"][1]
             posP2 = posit["positions_m"]["pos"][0]
             self.nro_player = "p2"
             self.nro_oponent = "p1"
+            self.user_player = posit["p2"]
+            self.user_oponent = posit["p1"]
 
         #Creacion y ubicacion de jugadores y meta
-        player_1 = Player(self.display, posP)
-        player_2 = Player(self.display, posP2)
+        player_1 = Player(self.display, posP, positions_free)
+        player_2 = Player(self.display, posP2, positions_free)
 
         posW = posit["positions_m"]["pos"][2]
         pointWin = PointWin(self.display, posW)
@@ -73,6 +80,9 @@ class Game:
 
         while True:
 
+            # Obtener posicion del rival
+            players[1].set_position(self.get_changes())
+
             # Segundos transcurriendo de haber iniciado pygame
             segundo_act = int(pygame.time.get_ticks()) // 1000
             # Si la copia y los segundos actuales son diferentes
@@ -84,62 +94,45 @@ class Game:
                 self.segundo = 0
                 self.loop()
 
-            pos_change = [[0, 0], self.get_changes()]
-
             for event in pygame.event.get():
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
-                    # Borra la partida multijugador del servidor
-                    self.delete_match()
                     self.delete_user()
+                    self.delete_match()
                     exit()
 
                 # Si se presiona una tecla
                 if event.type == pygame.KEYDOWN:
 
                     if event.key == pygame.K_LEFT:
-                        pos_change[0][0] += -self.square_size
-                        pos_change[0][1] = 0
 
-                        if (players[0].movimientoValido(pos_change[0], positions) or not
-                        players[0].movimientoValido(pos_change[0], positions_free)):
-                            pos_change[0] = [0, 0]
-                        else:
-                            # Enviar cambio de jugador local al servidor
-                            self.set_change(pos_change[0][0], pos_change[0][1])
+                        pos_player_pos = players[0].get_pos_xy()
+                        pos_player_pos[0] += -self.square_size
+
+                        if players[0].verify_pos(pos_player_pos):
+                            self.set_change(players[0].get_pos_xy())
 
                     elif event.key == pygame.K_RIGHT:
-                        pos_change[0][0] += self.square_size
-                        pos_change[0][1] = 0
 
-                        if (players[0].movimientoValido(pos_change[0], positions) or not
-                        players[0].movimientoValido(pos_change[0], positions_free)):
-                            pos_change[0] = [0, 0]
-                        else:
-                            # Enviar cambio de jugador local al servidor
-                            self.set_change(pos_change[0][0], pos_change[0][1])
+                        pos_player_pos = players[0].get_pos_xy()
+                        pos_player_pos[0] += self.square_size
+
+                        if players[0].verify_pos(pos_player_pos):
+                            self.set_change(players[0].get_pos_xy())
 
                     elif event.key == pygame.K_UP:
-                        pos_change[0][0] = 0
-                        pos_change[0][1] += -self.square_size
 
-                        if (players[0].movimientoValido(pos_change[0], positions) or not
-                        players[0].movimientoValido(pos_change[0], positions_free)):
-                            pos_change[0] = [0, 0]
-                        else:
-                            # Enviar cambio de jugador local al servidor
-                            self.set_change(pos_change[0][0], pos_change[0][1])
+                        pos_player_pos = players[0].get_pos_xy()
+                        pos_player_pos[1] += -self.square_size
 
+                        if players[0].verify_pos(pos_player_pos):
+                            self.set_change(players[0].get_pos_xy())
                     elif event.key == pygame.K_DOWN:
-                        pos_change[0][0] = 0
-                        pos_change[0][1] += self.square_size
+                        pos_player_pos = players[0].get_pos_xy()
+                        pos_player_pos[1] += self.square_size
 
-                        if (players[0].movimientoValido(pos_change[0], positions) or not
-                        players[0].movimientoValido(pos_change[0], positions_free)):
-                            pos_change[0] = [0, 0]
-                        else:
-                            # Enviar cambio de jugador local al servidor
-                            self.set_change(pos_change[0][0], pos_change[0][1])
+                        if players[0].verify_pos(pos_player_pos):
+                            self.set_change(players[0].get_pos_xy())
 
             # Fill background and draw game area
             self.display.fill(Config['colors']['green'])
@@ -156,37 +149,30 @@ class Game:
                 ]
             )
 
-            for x_y in positions:
+            for x in positions:
                 pygame.draw.rect(
                     self.display,
                     Config['colors']['black'],
                     [
-                        x_y[0],
-                        x_y[1],
+                        x[0],
+                        x[1],
                         self.square_size,
                         self.square_size
                     ]
                 )
 
-            for playerN in range(2):
+            if players[0].get_pos_xy() == posW:
+                self.score += 1
+                self.segundo = 0
+                self.loop()
 
-                # Con una funcion de la clase player valido si la siguiente posicion es valida
-                if (players[playerN].movimientoValido(pos_change[playerN], positions) or not
-                        players[playerN].movimientoValido(pos_change[playerN], positions_free)):
-                    continue
-                # Muevo con el respectivo cambio
-                players[playerN].move(pos_change[playerN])
-
-                if [players[playerN].get_posx(), players[playerN].get_posy()] == posW:
-                    self.score += 1
-                    self.loop()
-
-                players[playerN].draw()
-
+            players[0].draw()
+            players[1].draw()
             pointWin.draw()
 
             # Initialize font and draw title and score text
             pygame.font.init()
+
             font = pygame.font.SysFont(pygame.font.get_default_font(), 30)
 
             score_text = 'Puntuacion: {}'.format(self.score)
@@ -213,6 +199,8 @@ class Game:
             pygame.display.update()
             clock.tick(Config['game']['fps'])
 
+
+    # YES
     def verify_multi(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
@@ -233,6 +221,7 @@ class Game:
 
             return data
 
+    # YES
     def verify_multi_out(self):
         count_seconds = 0
         self.num_match = self.verify_multi()
@@ -243,6 +232,7 @@ class Game:
             if count_seconds > 60:
                 exit(0)
 
+    # YES
     def lists(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
@@ -276,38 +266,38 @@ class Game:
             sock.send( command.encode())
 
             data = sock.recv(256).decode()
-            if data == "not_match":
-                exit()
 
-            data_all = json.loads(data)
+            # 2do player no sabe que termino partida
+            if data == "not_match":
+                self.delete_user()
+                exit()
+            else:
+                data_all = json.loads(data)
 
             return data_all["change"]
 
+    # YES
     def delete_match(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
             sock.send( "delete_match".encode() )
-
             time.sleep(1)
-            print("delete match")
 
             sock.sendall( str(self.num_match).encode() )
 
-    def set_change(self, change_x, change_y):
+    def set_change(self, change):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            command = "update_change" + "_" + self.nro_player + "_" + self.num_match + "_" + str(change_x) + "_" + str(change_y)
-
+            command = "update_change" + "_" + self.nro_player + "_" + self.num_match + "_" + str(change[0]) + "_" + str(change[1])
             sock.send( command.encode())
 
+    # YES
     def delete_user(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
             sock.send( "delete_user".encode() )
-
             time.sleep(1)
-
             sock.sendall( self.user["user_s"].encode() )

@@ -31,7 +31,7 @@ class Game3:
 
         #Creacion y ubicacion de jugadores y meta
         posP = pos_m[0]
-        player_1 = Player(self.display, posP)
+        player_1 = Player(self.display, posP, positions_free)
 
         # Se puede añadir mas jugadores en players
         players = list()
@@ -55,9 +55,6 @@ class Game3:
                 self.segundo = 0
                 self.loop()
 
-            # Se puede añadir mas listas en pos_change para mas jugadores
-            pos_change = [[0, 0]]
-
             for event in pygame.event.get():
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
@@ -67,36 +64,31 @@ class Game3:
                 if event.type == pygame.KEYDOWN:
 
                     if event.key == pygame.K_LEFT:
-                        pos_change[0][0] += -self.square_size
-                        pos_change[0][1] = 0
 
-                        if (players[0].movimientoValido(pos_change[0], positions) or not
-                        players[0].movimientoValido(pos_change[0], positions_free)):
-                            pos_change[0] = [0, 0]
+                        pos_player_pos = players[0].get_pos_xy()
+                        pos_player_pos[0] += -self.square_size
+
+                        players[0].verify_pos(pos_player_pos)
 
                     elif event.key == pygame.K_RIGHT:
-                        pos_change[0][0] += self.square_size
-                        pos_change[0][1] = 0
 
-                        if (players[0].movimientoValido(pos_change[0], positions) or not
-                        players[0].movimientoValido(pos_change[0], positions_free)):
-                            pos_change[0] = [0, 0]
+                        pos_player_pos = players[0].get_pos_xy()
+                        pos_player_pos[0] += self.square_size
+
+                        players[0].verify_pos(pos_player_pos)
 
                     elif event.key == pygame.K_UP:
-                        pos_change[0][0] = 0
-                        pos_change[0][1] += -self.square_size
 
-                        if (players[0].movimientoValido(pos_change[0], positions) or not
-                        players[0].movimientoValido(pos_change[0], positions_free)):
-                            pos_change[0] = [0, 0]
+                        pos_player_pos = players[0].get_pos_xy()
+                        pos_player_pos[1] += -self.square_size
+
+                        players[0].verify_pos(pos_player_pos)
 
                     elif event.key == pygame.K_DOWN:
-                        pos_change[0][0] = 0
-                        pos_change[0][1] += self.square_size
+                        pos_player_pos = players[0].get_pos_xy()
+                        pos_player_pos[1] += self.square_size
 
-                        if (players[0].movimientoValido(pos_change[0], positions) or not
-                        players[0].movimientoValido(pos_change[0], positions_free)):
-                            pos_change[0] = [0, 0]
+                        players[0].verify_pos(pos_player_pos)
 
             # Fill background and draw game area
             self.display.fill(Config['colors']['green'])
@@ -128,13 +120,7 @@ class Game3:
             # range tiene 1 porque solo hay 1 jugador en players
             for playerN in range(1):
 
-                if (players[playerN].movimientoValido(pos_change[playerN], positions) or not
-                        players[playerN].movimientoValido(pos_change[playerN], positions_free)):
-                    continue
-
-                players[playerN].move(pos_change[playerN])
-
-                if [players[playerN].get_posx(), players[playerN].get_posy()] == posW:
+                if players[playerN].get_pos_xy() == posW:
                     self.score += 1
                     self.segundo = 0
                     self.loop()

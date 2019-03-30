@@ -115,8 +115,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         conn, addr = s.accept()
         with conn:
 
-            print('CONNECT WITH', addr)
-
             # String con la peticion que se hace al cliente y numero de bits
             comando = conn.recv(256).decode()
 
@@ -124,8 +122,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             if len(comando_split) != 2:
                 comando = comando_split[0] + "_" +  comando_split[1]
 
-            print(comando)
-            print("Bytes: " + str(comando.__sizeof__()))
+            # print(comando)
+            # print("Bytes: " + str(comando.__sizeof__()))
 
             # Valida que exista usuario (si no, lo crea), ademas no pueden crearse 2 partidas con un mismo user
             if comando == "verify_user":
@@ -134,11 +132,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                 from_clt = json.loads(data_all)
 
-                # True si existe o se creo el registro en mongoDb
+                # True si existe o se creo el registro en mongoDb o estan en users activos
                 validar = conn_mongo.view_user(from_clt)
-
                 validar2 = verify_match(dual_player, from_clt["user_s"])
-
                 validar3 = False
 
                 for element in users:
@@ -154,7 +150,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     users.add(from_clt["user_s"])
                 else:
                     conn.send("no".encode())
-
+            # Añade un jugador al diccionario, debido a que esta en linea actualmente
             elif comando == "append_user":
 
                 data_all = conn.recv(256).decode()
@@ -167,13 +163,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 datos_serial = json.dumps( positions_def() )
                 conn.sendall(datos_serial.encode())
 
-            # Modo one-player envia un record que si es mayor al anterior lo sustituye
+            # Modo one-player envia un record a la base de datos, si es mayor al anterior lo sustituye
             elif comando == "send_points":
 
                 data_all = conn.recv(256).decode()
 
                 from_clt = json.loads(data_all)
-
                 conn_mongo.view_record(from_clt)
 
             # Enlaza jugadores en multiplayer y crea los parametros del laberinto inicial
@@ -182,16 +177,24 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 data_all = conn.recv(256).decode()
                 from_clt = json.loads(data_all)
 
-                # Añado una lista en la lista dual_player, si esta vacia
+                # Añado una lista (datos de partida) en la lista dual_player, si esta vacia
                 if len(dual_player) == 0:
-
+                    '''
+                    p1: nombre de usuario 1
+                    p2: nombre de usuario 2
+                    p1_c: posicion de usuario 1
+                    p2_c: posicion de usuario 2
+                    match: nro de la partida
+                    positions_m: posiciones de laberinto e iniciales de los jugadores
+                    '''
+                    positions_conn = positions_def2()
                     dict_player = {
                         "p1": None,
                         "p2": None,
-                        "p1_c": [0, 0],
-                        "p2_c": [0, 0],
+                        "p1_c": positions_conn["pos"][0],
+                        "p2_c": positions_conn["pos"][1],
                         "match": contador_partidas,
-                        "positions_m": positions_def2()
+                        "positions_m": positions_conn
                     }
 
                     dual_player.append( dict_player )
@@ -206,20 +209,21 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     elif player["p2"] is None:
                         player["p2"] = from_clt["user_s"]
 
+                        positions_conn = positions_def2()
                         dict_player = {
                             "p1": None,
                             "p2": None,
-                            "p1_c": [0, 0],
-                            "p2_c": [0, 0],
+                            "p1_c": positions_conn["pos"][0],
+                            "p2_c": positions_conn["pos"][1],
                             "match": contador_partidas,
-                            "positions_m": positions_def2()
+                            "positions_m": positions_conn
                         }
 
                         dual_player.append( dict_player )
                         contador_partidas += 1
                         break
 
-            # Verifica que exista una partida multiplayer para el cliente
+            # Verifica que exista una partida multiplayer para el cliente y envia el numero de partida
             elif comando == "verify_multi":
 
                 data_all = conn.recv(256).decode()
@@ -269,22 +273,25 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         dual_player.remove(player)
                         break
 
+            # Elimina un jugador del diccionario, debido a que salio del juego
             elif comando == "delete_user":
 
                 data_all = conn.recv(256).decode()
-
                 users.remove(data_all)
 
             elif comando == "get_change":
                 # Oponente oponente y nro de partida
                 oponent = comando_split[2]
                 match =  int(comando_split[3])
+                # if la partida no existe
+                not_found_match = True
 
                 for player in dual_player:
 
                     if not match == player["match"]:
                         continue
 
+                    # Diccionario para enviar la posicion del oponente
                     dict_change = {
                         "change": None
                     }
@@ -293,21 +300,23 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                         dict_change["change"] = player["p1_c"]
                         changes_player = json.dumps(dict_change)
+
                         conn.send(changes_player.encode())
-                        player["p1_c"] = [0, 0]
+                        not_found_match = False
 
                     elif oponent == "p2":
 
                         dict_change["change"] = player["p2_c"]
                         changes_player = json.dumps(dict_change)
-                        conn.send(changes_player.encode())
-                        player["p2_c"] = [0, 0]
 
-                    else:
-                        conn.send( "not_match".encode())
+                        conn.send(changes_player.encode())
+                        not_found_match = False
+
+                if not_found_match:
+                    conn.send( "not_match".encode())
 
             elif comando == "update_change":
-                # Extra oponente y nro de partida
+                # Extra oponente, nro de partida y posiciones actuales del jugador para actualizar dichas posiciones
                 player_n = comando_split[2]
                 match = int(comando_split[3])
                 c_x = int(comando_split[4])
@@ -323,7 +332,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     elif player_n == "p2":
                         player["p2_c"] = [ c_x, c_y]
 
-            print("-" * 50)
-
-        print(users)
-
+            # print('CONNECT WITH', addr)

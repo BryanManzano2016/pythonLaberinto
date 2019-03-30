@@ -2,8 +2,6 @@ import pymongo
 
 def view_user(from_clt):
 
-    print("CONNECT WITH DB")
-
     validar = False
     repetido = False
     # Datos para conexion
@@ -33,19 +31,19 @@ def view_user(from_clt):
 
     return validar
 
+# Valida si el record de un jugador es mayor, si es lo reemplaza
 def view_record(from_clt):
-    print("CONNECT WITH DB")
 
     myclient = pymongo.MongoClient('mongodb://localhost:27017/')
     mydb = myclient['players_laberinto']
     collection_mg = mydb["player"]
 
     for player in collection_mg.find():
-
+        # Coincide en datos (user, pass)
         if from_clt["user_s"] == player["user"] and from_clt["pass_s"] == player["pass"]:
 
             if from_clt["record"] > player["record"]:
-
+                # Update
                 myquery = {"user":from_clt["user_s"], "pass":from_clt["pass_s"]}
                 newvalues = {"$set": {"record": from_clt["record"]}}
                 collection_mg.update_one(myquery, newvalues)
