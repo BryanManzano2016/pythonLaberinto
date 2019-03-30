@@ -16,6 +16,7 @@ def view_user(from_clt):
         # user y pass iguales
         if from_clt["user_s"] == player["user"] and from_clt["pass_s"] == player["pass"]:
             validar = True
+            repetido = True
         # solo user igual
         elif from_clt["user_s"] == player["user"] and not from_clt["pass_s"] == player["pass"]:
             repetido = True

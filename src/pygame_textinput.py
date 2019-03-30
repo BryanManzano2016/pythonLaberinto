@@ -22,11 +22,11 @@ class TextInput:
             initial_string="",
             font_family="",
             font_size=35,
-            antialias=True,
+            antialias=False,
             text_color=(255, 255, 255),
-            cursor_color=(0, 0, 1),
-            repeat_keys_initial_ms=400,
-            repeat_keys_interval_ms=35):
+            cursor_color=(255, 255, 255),
+            repeat_keys_initial_ms=300,
+            repeat_keys_interval_ms=50):
         """
         :param initial_string: Initial text to be displayed
         :param font_family: name or list of names for font (see pygame.font.match_font for precise format)

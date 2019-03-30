@@ -8,6 +8,9 @@ from src.Game3 import *
 -Se observaran los botones de play y multijugador
 '''
 
+HOST = '192.168.100.133'
+PORT = 60000
+
 class Menu_play:
 
     def __init__(self, display, data):
@@ -36,6 +39,7 @@ class Menu_play:
             for event in events:
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
+                    self.delete_user()
                     exit()
 
                 # Si se presiona una tecla
@@ -139,7 +143,7 @@ class Menu_play:
             self.display.blit(play_text, play_text_rect)
 
             pygame.display.update()
-            clock.tick(Config['game']['fps'])
+            clock.tick(5)
 
 
     def buttons_click(self, x, y, wd, hg, mouse, click):
@@ -150,7 +154,6 @@ class Menu_play:
                 # Intenta conectar 2 jugadores
                 self.connect_player()
                 Game(self.display, self.player_dict())
-                print(self.player_dict())
 
     def buttons_click_i(self, x, y, wd, hg, mouse, click):
 
@@ -182,3 +185,13 @@ class Menu_play:
 
             sock.sendall( user_json.encode() )
 
+    def delete_user(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            sock.send( "delete_user".encode() )
+
+            time.sleep(1)
+
+            user_name = self.player_dict()
+            sock.sendall( user_name["user_s"].encode() )

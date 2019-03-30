@@ -55,7 +55,7 @@ class Game2:
                 segundo_ant = segundo_act
                 self.segundo += 1
             #El contador global de segundos llega a 30 y reinicia la partida
-            if self.segundo >= 30:
+            if self.segundo >= 45:
                 self.segundo = 0
                 self.loop()
 
@@ -65,6 +65,7 @@ class Game2:
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
                     self.send_record()
+                    self.delete_user()
                     exit()
 
                 # Si se presiona una tecla
@@ -74,17 +75,33 @@ class Game2:
                         pos_change[0][0] += -self.square_size
                         pos_change[0][1] = 0
 
+                        if (players[0].movimientoValido(pos_change[0], positions) or not
+                        players[0].movimientoValido(pos_change[0], positions_free)):
+                            pos_change[0] = [0, 0]
+
                     elif event.key == pygame.K_RIGHT:
                         pos_change[0][0] += self.square_size
                         pos_change[0][1] = 0
+
+                        if (players[0].movimientoValido(pos_change[0], positions) or not
+                        players[0].movimientoValido(pos_change[0], positions_free)):
+                            pos_change[0] = [0, 0]
 
                     elif event.key == pygame.K_UP:
                         pos_change[0][0] = 0
                         pos_change[0][1] += -self.square_size
 
+                        if (players[0].movimientoValido(pos_change[0], positions) or not
+                        players[0].movimientoValido(pos_change[0], positions_free)):
+                            pos_change[0] = [0, 0]
+
                     elif event.key == pygame.K_DOWN:
                         pos_change[0][0] = 0
                         pos_change[0][1] += self.square_size
+
+                        if (players[0].movimientoValido(pos_change[0], positions) or not
+                        players[0].movimientoValido(pos_change[0], positions_free)):
+                            pos_change[0] = [0, 0]
 
             # Fill background and draw game area
             self.display.fill(Config['colors']['green'])
@@ -179,6 +196,16 @@ class Game2:
             datos_serial = json.dumps(datos)
             sock.sendall(datos_serial.encode())
 
+    def delete_user(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            sock.send( "delete_user".encode() )
+
+            time.sleep(1)
+
+            sock.sendall( self.user["user_s"].encode() )
+
 def lists():
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -195,4 +222,3 @@ def lists():
         from_js = json.loads(data_all)
 
     return from_js["positions_free"], from_js["positions"], from_js["pos"]
-

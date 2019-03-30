@@ -12,6 +12,9 @@ Boton invitado: Solo puede jugar partidas only-player
 Boton multijugador: Ingresa user-password y puede jugar only-player o multijugador 
 '''
 
+HOST = '192.168.100.133'
+PORT = 60000
+
 class Menu:
 
     def __init__(self, display):
@@ -38,6 +41,7 @@ class Menu:
             events = pygame.event.get()
 
             for event in events:
+
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
                     exit()
@@ -46,11 +50,12 @@ class Menu:
                 if event.type == pygame.KEYDOWN:
                     pass
                 # Por cada evento alimenta al input
-                textinput.update(events)
 
                 # posiciones de mouse y clicks
                 mouse = pygame.mouse.get_pos()
                 click = pygame.mouse.get_pressed()
+
+                data_u = textinput.get_text()
 
                 self.buttons_click((self.width_total / 2) - (self.width_button / 2),
                               (self.height_total / 4) - (self.height_button / 1.5),
@@ -59,8 +64,6 @@ class Menu:
                               mouse,
                               click,
                               "0")
-
-                data_u = textinput.get_text()
 
                 self.buttons_click((self.width_total / 2) - (self.width_button / 2),
                     (self.height_total / 2) + self.height_button,
@@ -169,8 +172,10 @@ class Menu:
             self.display.blit(textinput.get_surface(), ( (self.width_total / 2) - (self.width_button / 2),
                 (self.height_total / 2) + 35) )
 
+            textinput.update(events)
+
             pygame.display.update()
-            clock.tick(Config['game']['fps'])
+            clock.tick(5)
 
 
     def buttons_click(self, x, y, wd, hg, mouse, click, data):
@@ -182,15 +187,25 @@ class Menu:
 
             elif click[0] == 1 and data != "":
                 if verificar_user(data):
+                    # Añadir al usuario al servidor mientras dura la conexion
+                    time.sleep(1)
+                    user_name = player_dict(data)
+                    append_user( user_name["user_s"] )
                     time.sleep(1)
                     menu_play.Menu_play(self.display, data)
 
-def verificar_user(data):
-    HOST = '192.168.100.133'
-    PORT = 60000
+def player_dict(data_st):
+    # Extrae la data del self.user
+    user_pass = data_st.split(",")
+    user = {
+        "user_s" : user_pass[0],
+        "pass_s" : user_pass[1]
+    }
+    return user
 
-    user_pass = str(data).split(",")
-    user = {"user_s": user_pass[0], "pass_s": user_pass[1]}
+def verificar_user(data):
+
+    user = player_dict(data)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
@@ -202,9 +217,20 @@ def verificar_user(data):
         datos_serial = json.dumps(user)
         sock.sendall(datos_serial.encode())
 
-        data_all = sock.recv(4096).decode()
+        data_all = sock.recv(256).decode()
 
         if data_all == "ok":
             return True
         else:
             return False
+
+# user_st: nombre de usuario a añadir en cadena
+def append_user(user_st):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((HOST, PORT))
+
+        sock.send( "append_user".encode() )
+
+        time.sleep(1)
+
+        sock.sendall( user_st.encode() )

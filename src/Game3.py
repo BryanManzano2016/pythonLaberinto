@@ -51,7 +51,7 @@ class Game3:
                 segundo_ant = segundo_act
                 self.segundo += 1
             #El contador global de segundos llega a 30 y reinicia la partida
-            if self.segundo == 5:
+            if self.segundo == 45:
                 self.segundo = 0
                 self.loop()
 
@@ -70,17 +70,33 @@ class Game3:
                         pos_change[0][0] += -self.square_size
                         pos_change[0][1] = 0
 
+                        if (players[0].movimientoValido(pos_change[0], positions) or not
+                        players[0].movimientoValido(pos_change[0], positions_free)):
+                            pos_change[0] = [0, 0]
+
                     elif event.key == pygame.K_RIGHT:
                         pos_change[0][0] += self.square_size
                         pos_change[0][1] = 0
+
+                        if (players[0].movimientoValido(pos_change[0], positions) or not
+                        players[0].movimientoValido(pos_change[0], positions_free)):
+                            pos_change[0] = [0, 0]
 
                     elif event.key == pygame.K_UP:
                         pos_change[0][0] = 0
                         pos_change[0][1] += -self.square_size
 
+                        if (players[0].movimientoValido(pos_change[0], positions) or not
+                        players[0].movimientoValido(pos_change[0], positions_free)):
+                            pos_change[0] = [0, 0]
+
                     elif event.key == pygame.K_DOWN:
                         pos_change[0][0] = 0
                         pos_change[0][1] += self.square_size
+
+                        if (players[0].movimientoValido(pos_change[0], positions) or not
+                        players[0].movimientoValido(pos_change[0], positions_free)):
+                            pos_change[0] = [0, 0]
 
             # Fill background and draw game area
             self.display.fill(Config['colors']['green'])
@@ -170,6 +186,7 @@ def lists():
             if not data:
                 break
             data_all += data
+
         from_js = json.loads(data_all)
     sock.close()
     return from_js["positions_free"], from_js["positions"], from_js["pos"]

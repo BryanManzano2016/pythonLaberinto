@@ -3,7 +3,7 @@ Config = {
         'caption': 'Laberinto',
         'height': 680,
         'width': 980,
-        'fps': 45,
+        'fps': 1,
         'bumper_size': 30,
         'square_size': 10,
         'number_squares': 500,

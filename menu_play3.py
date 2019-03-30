@@ -89,7 +89,7 @@ class Menu_play:
             self.display.blit(play_text, play_text_rect)
 
             pygame.display.update()
-            clock.tick(Config['game']['fps'])
+            clock.tick(5)
 
     def buttons_click(self, x, y, wd, hg, mouse, click):
 
