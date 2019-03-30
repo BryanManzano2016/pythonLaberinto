@@ -182,6 +182,7 @@ class Menu:
 
             elif click[0] == 1 and data != "":
                 if verificar_user(data):
+                    time.sleep(1)
                     menu_play.Menu_play(self.display, data)
 
 def verificar_user(data):

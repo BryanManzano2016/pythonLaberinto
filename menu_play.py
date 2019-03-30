@@ -181,3 +181,4 @@ class Menu_play:
             user_json = json.dumps(self.player_dict())
 
             sock.sendall( user_json.encode() )
+

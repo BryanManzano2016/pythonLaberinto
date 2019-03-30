@@ -23,7 +23,6 @@ class Game:
 
         self.score = 0
         self.segundo = 0
-
         self.user = user_g
         self.num_match = None
 
@@ -34,19 +33,15 @@ class Game:
         clock = pygame.time.Clock()
 
         self.num_match = self.verify_multi()
-
         while self.num_match == "not_partner":
-
             time.sleep(3)
             self.num_match = self.verify_multi()
 
         print(self.num_match)
 
         posit = self.lists()
-
         positions_free = posit["positions_m"]["positions_free"]
         positions = posit["positions_m"]["positions"]
-
         posP = list()
         posP2 = list()
 
@@ -56,9 +51,6 @@ class Game:
         elif self.user["user_s"] == posit["p2"]:
             posP = posit["positions_m"]["pos"][1]
             posP2 = posit["positions_m"]["pos"][0]
-
-        print(len(posP))
-        print(len(posP2))
 
         #Creacion y ubicacion de jugadores y meta
         player_1 = Player(self.display, posP)
@@ -87,6 +79,7 @@ class Game:
                 self.segundo = 0
                 self.loop()
 
+            #self.get_changes()
             #pos_c = self.get_changes()
             #pos_change = [pos_c["change_p1"], pos_c["change_p2"]]
             pos_change = [[0, 0], [0, 0]]
@@ -94,6 +87,7 @@ class Game:
             for event in pygame.event.get():
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
+                    self.delete_match()
                     exit()
 
                 # Si se presiona una tecla
@@ -265,9 +259,20 @@ class Game:
                     break
                 data_all += data
 
-            from_js = json.loads(data_all)
+            print(data_all)
 
-            return from_js
+            #from_js = json.loads(data_all)
 
+            #print(from_js)
 
+            #return from_js
 
+    def delete_match(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            sock.send( "delete_match".encode() )
+
+            time.sleep(1)
+
+            sock.sendall( str(self.num_match).encode() )
