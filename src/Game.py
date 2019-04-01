@@ -92,6 +92,7 @@ class Game:
             #El contador global de segundos llega a 30 y reinicia la partida
             if self.segundo == 45:
                 self.segundo = 0
+                self.send_restart()
                 self.loop()
 
             for event in pygame.event.get():
@@ -164,6 +165,7 @@ class Game:
             if players[0].get_pos_xy() == posW:
                 self.score += 1
                 self.segundo = 0
+                self.send_winner()
                 self.loop()
 
             players[0].draw()
@@ -199,8 +201,7 @@ class Game:
             pygame.display.update()
             clock.tick(Config['game']['fps'])
 
-
-    # YES
+    # Retorna el nro de partida
     def verify_multi(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
@@ -221,7 +222,7 @@ class Game:
 
             return data
 
-    # YES
+    # Cada 3 segundos ejecuta verify_multi, si se pasa de 60 segundos cierra el juego
     def verify_multi_out(self):
         count_seconds = 0
         self.num_match = self.verify_multi()
@@ -232,7 +233,7 @@ class Game:
             if count_seconds > 60:
                 exit(0)
 
-    # YES
+    # Data de la partida
     def lists(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
@@ -276,7 +277,24 @@ class Game:
 
             return data_all["change"]
 
-    # YES
+    # Modifica la posicion de jugador local
+    def set_change(self, change):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            command = "update_change" + "_" + self.nro_player + "_" + self.num_match + "_" + str(change[0]) + "_" + str(change[1])
+            sock.send( command.encode())
+
+    # Borra la sesion activa en el servidor
+    def delete_user(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            sock.send( "delete_user".encode() )
+            time.sleep(1)
+            sock.sendall( self.user["user_s"].encode() )
+
+    # Borra la partida activa en el servidor
     def delete_match(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
@@ -286,18 +304,30 @@ class Game:
 
             sock.sendall( str(self.num_match).encode() )
 
-    def set_change(self, change):
+    # Envia si jugador local gana la partida actual y con ello otro laberinto
+    def send_winner(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            command = "update_change" + "_" + self.nro_player + "_" + self.num_match + "_" + str(change[0]) + "_" + str(change[1])
-            sock.send( command.encode())
+            sock.send( "send_winner".encode() )
 
-    # YES
-    def delete_user(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((HOST, PORT))
-
-            sock.send( "delete_user".encode() )
             time.sleep(1)
-            sock.sendall( self.user["user_s"].encode() )
+
+            # num_match es string
+            datos = {
+                "winner": self.user["user_s"],
+                "match": self.num_match
+            }
+
+            datos_serial = json.dumps(datos)
+            sock.sendall( datos_serial.encode() )
+
+    def send_restart(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            sock.send( "send_restart".encode() )
+
+            time.sleep(1)
+
+            sock.sendall( str(self.num_match).encode() )

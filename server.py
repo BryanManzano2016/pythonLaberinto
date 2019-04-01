@@ -54,6 +54,12 @@ def positions_def2():
 
     return datos
 
+def set_new_pos():
+
+    positions_conn_2 = positions_def2()
+
+    return positions_conn_2["pos"][0], positions_conn_2["pos"][1], positions_conn_2
+
 # Retorna posiciones para one-player e invitado
 def positions_def():
     # Array multidimensional para posiciones (x, y)
@@ -187,14 +193,18 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     match: nro de la partida
                     positions_m: posiciones de laberinto e iniciales de los jugadores
                     '''
-                    positions_conn = positions_def2()
+                    p1_c, p2_c, positions_m = set_new_pos()
+
                     dict_player = {
                         "p1": None,
                         "p2": None,
-                        "p1_c": positions_conn["pos"][0],
-                        "p2_c": positions_conn["pos"][1],
+                        "p1_c": p1_c,
+                        "p2_c": p2_c,
+                        "p1_points": 0,
+                        "p2_points": 0,
                         "match": contador_partidas,
-                        "positions_m": positions_conn
+                        "positions_m": positions_m,
+                        "status": True
                     }
 
                     dual_player.append( dict_player )
@@ -209,14 +219,18 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     elif player["p2"] is None:
                         player["p2"] = from_clt["user_s"]
 
-                        positions_conn = positions_def2()
+                        p1_c, p2_c, positions_m = set_new_pos()
+
                         dict_player = {
                             "p1": None,
                             "p2": None,
-                            "p1_c": positions_conn["pos"][0],
-                            "p2_c": positions_conn["pos"][1],
+                            "p1_c": p1_c,
+                            "p2_c": p2_c,
+                            "p1_points": 0,
+                            "p2_points": 0,
                             "match": contador_partidas,
-                            "positions_m": positions_conn
+                            "positions_m": positions_m,
+                            "status": True
                         }
 
                         dual_player.append( dict_player )
@@ -233,7 +247,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                 for player in dual_player:
 
-                    if player["p1"] is None or player["p2"] is None:
+                    if player["p1"] is None or player["p2"] is None or player["p1"] != from_clt["user_s"] or \
+                            player["p2"] != from_clt["user_s"]:
                         continue
 
                     if player["p1"] == from_clt["user_s"] or player["p2"] == from_clt["user_s"]:
@@ -250,7 +265,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 data_all = conn.recv(256).decode()
                 for player in dual_player:
 
-                    if player["match"] == int(data_all):
+                    if int(data_all) != player["match"]:
+                        continue
+                    elif player["match"] == int(data_all):
 
                         # Envia el nombre del usuario oponente y las posiciones iniciales del laberinto
                         dict_game = {
@@ -269,7 +286,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 data_all = conn.recv(256).decode()
                 for player in dual_player:
 
-                    if player["match"] == int(data_all):
+                    if player["match"] != int(data_all):
+                        continue
+                    elif player["match"] == int(data_all):
+
+                        if player["p1_points"] > player["p2_points"]:
+                            conn_mongo.set_result(player["p1"], player["p2"], player["p1"])
+                        if player["p1_points"] < player["p2_points"]:
+                            conn_mongo.set_result(player["p1"], player["p2"], player["p2"])
+
                         dual_player.remove(player)
                         break
 
@@ -279,6 +304,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 data_all = conn.recv(256).decode()
                 users.remove(data_all)
 
+            # Recupera la posicion rival
             elif comando == "get_change":
                 # Oponente oponente y nro de partida
                 oponent = comando_split[2]
@@ -288,7 +314,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                 for player in dual_player:
 
-                    if not match == player["match"]:
+                    if match != player["match"]:
                         continue
 
                     # Diccionario para enviar la posicion del oponente
@@ -315,6 +341,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 if not_found_match:
                     conn.send( "not_match".encode())
 
+            #Actualiza la posicion del jugador
             elif comando == "update_change":
                 # Extra oponente, nro de partida y posiciones actuales del jugador para actualizar dichas posiciones
                 player_n = comando_split[2]
@@ -324,7 +351,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                 for player in dual_player:
 
-                    if not match == player["match"]:
+                    if match != player["match"]:
                         continue
 
                     if player_n == "p1":
@@ -332,4 +359,49 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     elif player_n == "p2":
                         player["p2_c"] = [ c_x, c_y]
 
-            # print('CONNECT WITH', addr)
+            elif comando == "send_winner":
+
+                data_all = conn.recv(256).decode()
+
+                from_clt = json.loads(data_all)
+
+                for player in dual_player:
+
+                    if player["p1"] is None or player["p2"] is None or int( from_clt["match"] ) != player["match"]:
+                        continue
+
+                    if from_clt["winner"] == player["p1"]:
+                        player["p1_points"] += 1
+                    elif from_clt["winner"] == player["p2"]:
+                        player["p2_points"] += 1
+
+                    p1_c, p2_c, positions_m = set_new_pos()
+                    player["p1_c"] = p1_c
+                    player["p2_c"] = p2_c
+                    player["positions_m"] = positions_m
+
+            elif comando == "send_restart":
+
+                data_all = int( conn.recv(256).decode() )
+
+                for player in dual_player:
+
+                    if player["match"] != data_all:
+                        continue
+                    elif player["match"] == data_all:
+
+                        p1_c, p2_c, positions_m = set_new_pos()
+                        player["p1_c"] = p1_c
+                        player["p2_c"] = p2_c
+                        player["positions_m"] = positions_m
+
+            # Print de prueba
+            if comando != "get_change" and comando != "update_change":
+                print('CONNECT WITH', addr)
+                print(comando)
+                print(users)
+                for pl in dual_player:
+                    print(pl["match"])
+                    print(pl["p1"], " ,", pl["p1_c"], " ,", pl["p1_points"])
+                    print(pl["p2"], " ,", pl["p2_c"], " ,", pl["p2_points"])
+                print("-"*50)
