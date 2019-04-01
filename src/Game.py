@@ -10,10 +10,17 @@ import time
 HOST = '192.168.100.133'
 PORT = 60000
 
+'''
+num_match: nro de la partida en el servidor
+nro_player: es igual a P1 p P2 segun llegue 1ero la solicitud 
+nro_oponent: es igual a P1 p P2 segun llegue 1ero la solicitud
+user_player: nombre de usuario de jugador local
+user_oponent: nombre de usuario de oponente
+'''
 class Game:
 
     def __init__(self, display, user_g):
-
+        # Datos de juego
         self.display = display
         self.width_total = Config['game']['width']
         self.width_able = Config['game']['width'] - Config['game']['bumper_size']*15
@@ -22,7 +29,6 @@ class Game:
         self.square_size = Config['game']['square_size']
 
         self.score = 0
-        self.segundo = 0
         self.user = user_g
         self.num_match = None
         self.nro_player = None
@@ -30,7 +36,7 @@ class Game:
         self.user_player = None
         self.user_oponent = None
 
-        # Verifico el numero de partida,
+        # Verifico el numero de partida durante un lapso de tiempo
         self.verify_multi_out()
         self.loop()
 
@@ -53,7 +59,6 @@ class Game:
             self.nro_oponent = "p2"
             self.user_player = posit["p1"]
             self.user_oponent = posit["p2"]
-
         elif self.user["user_s"] == posit["p2"]:
             posP = posit["positions_m"]["pos"][1]
             posP2 = posit["positions_m"]["pos"][0]
@@ -78,7 +83,6 @@ class Game:
 
             # Obtener posicion del rival
             changes = self.get_changes()
-
             if self.nro_player == "p1":
                 players[0].set_position(changes["change_p1"])
                 players[1].set_position(changes["change_p2"])
@@ -100,7 +104,9 @@ class Game:
                         pos_player_pos = players[0].get_pos_xy()
                         pos_player_pos[0] += -self.square_size
 
+                        # Con una funcion de la clase player se verifica si es valido el movimiento
                         if players[0].verify_pos(pos_player_pos):
+                            # Si lo es, envia la posicion al servidor
                             self.update_change(players[0].get_pos_xy())
 
                     elif event.key == pygame.K_RIGHT:
@@ -139,7 +145,7 @@ class Game:
                     self.height_able
                 ]
             )
-
+            # Dibuja los cuadritos del laberinto
             for x in positions:
                 pygame.draw.rect(
                     self.display,
@@ -151,7 +157,7 @@ class Game:
                         self.square_size
                     ]
                 )
-
+            # Dibuja los jugadores
             players[0].draw()
             players[1].draw()
             pointWin.draw()
@@ -189,16 +195,16 @@ class Game:
     def verify_multi(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
-
+            # Envia un objeto serializado atraves de sockets
             datos = {
                 "comando": "verify_multi",
                 "user_s": self.user["user_s"],
                 "pass_s": self.user["pass_s"]
             }
-
             datos_serial = json.dumps(datos)
             sock.sendall( datos_serial.encode() )
 
+            # Recibe un objeto serializado atraves de sockets
             data = json.loads( sock.recv(256).decode() )
 
             return data["match"]
@@ -207,6 +213,7 @@ class Game:
     def verify_multi_out(self):
         count_seconds = 0
         self.num_match = self.verify_multi()
+        # -1 significa que no llega oponente
         while self.num_match == -1:
             time.sleep(3)
             self.num_match = self.verify_multi()
@@ -229,11 +236,12 @@ class Game:
 
             data_all = ""
             while True:
+                # 4096 es debido a que recibe por partes data de gran tamaño por partes
                 data = sock.recv(4096).decode()
                 if not data:
                     break
                 data_all += data
-
+            # Si hay rival, deserealiza la informacion
             if data_all != "not_partner":
                 from_js = json.loads(data_all)
                 return from_js
