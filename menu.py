@@ -56,6 +56,9 @@ class Menu:
                 click = pygame.mouse.get_pressed()
 
                 data_u = textinput.get_text()
+                user_pass = data_u.split(",")
+                if len(user_pass) != 2:
+                    continue
 
                 self.buttons_click((self.width_total / 2) - (self.width_button / 2),
                               (self.height_total / 4) - (self.height_button / 1.5),
@@ -205,16 +208,18 @@ def player_dict(data_st):
 
 def verificar_user(data):
 
-    user = player_dict(data)
-
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
 
-        sock.send( "verify_user".encode() )
+        user = player_dict(data)
 
-        time.sleep(1)
+        datos = {
+            "comando": "verify_user",
+            "user_s": user["user_s"],
+            "pass_s": user["pass_s"]
+        }
 
-        datos_serial = json.dumps(user)
+        datos_serial = json.dumps(datos)
         sock.sendall(datos_serial.encode())
 
         data_all = sock.recv(256).decode()
@@ -229,8 +234,10 @@ def append_user(user_st):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
 
-        sock.send( "append_user".encode() )
+        datos = {
+            "comando": "append_user",
+            "user_s": user_st
+        }
 
-        time.sleep(1)
-
-        sock.sendall( user_st.encode() )
+        datos_serial = json.dumps(datos)
+        sock.sendall(datos_serial.encode())

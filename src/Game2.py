@@ -170,11 +170,8 @@ class Game2:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            sock.send( "send_points".encode() )
-
-            time.sleep(1)
-
             datos = {
+                "comando": "send_points",
                 "user_s": self.user["user_s"],
                 "pass_s": self.user["pass_s"],
                 "record": self.score
@@ -183,22 +180,30 @@ class Game2:
             datos_serial = json.dumps(datos)
             sock.sendall(datos_serial.encode())
 
+
     def delete_user(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            sock.send( "delete_user".encode() )
+            datos = {
+                "comando": "delete_user",
+                "user_s": self.user["user_s"]
+            }
 
-            time.sleep(1)
-
-            sock.sendall( self.user["user_s"].encode() )
+            datos_serial = json.dumps(datos)
+            sock.sendall(datos_serial.encode())
 
 def lists():
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
 
-        sock.sendall( "create_pos".encode() )
+        datos = {
+            "comando": "create_pos",
+        }
+
+        datos_serial = json.dumps(datos)
+        sock.sendall(datos_serial.encode())
 
         data_all = ""
         while True:

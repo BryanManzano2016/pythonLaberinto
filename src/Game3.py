@@ -164,7 +164,12 @@ def lists():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
 
-        sock.sendall( "create_pos".encode() )
+        datos = {
+            "comando": "create_pos",
+        }
+
+        datos_serial = json.dumps(datos)
+        sock.sendall(datos_serial.encode())
 
         data_all = ""
         while True:
@@ -172,8 +177,7 @@ def lists():
             if not data:
                 break
             data_all += data
-
         from_js = json.loads(data_all)
-    sock.close()
+
     return from_js["positions_free"], from_js["positions"], from_js["pos"]
 

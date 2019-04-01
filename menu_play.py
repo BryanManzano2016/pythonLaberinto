@@ -177,21 +177,27 @@ class Menu_play:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            sock.send( "connect_players".encode() )
+            user = self.player_dict()
 
-            time.sleep(1)
+            datos = {
+                "comando": "connect_players",
+                "user_s": user["user_s"],
+                "pass_s": user["user_s"]
+            }
 
-            user_json = json.dumps(self.player_dict())
-
-            sock.sendall( user_json.encode() )
+            datos_serial = json.dumps(datos)
+            sock.sendall(datos_serial.encode())
 
     def delete_user(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            sock.send( "delete_user".encode() )
-
-            time.sleep(1)
-
             user_name = self.player_dict()
-            sock.sendall( user_name["user_s"].encode() )
+
+            datos = {
+                "comando": "delete_user",
+                "user_s": user_name["user_s"]
+            }
+
+            datos_serial = json.dumps(datos)
+            sock.sendall(datos_serial.encode())

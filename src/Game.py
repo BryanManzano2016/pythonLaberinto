@@ -40,7 +40,6 @@ class Game:
 
         # Extraccion de posiciones iniciales
         posit = self.lists()
-
         positions_free = posit["positions_m"]["positions_free"]
         positions = posit["positions_m"]["positions"]
         posP = list()
@@ -75,30 +74,21 @@ class Game:
         players.append(player_1)
         players.append(player_2)
 
-        # Una copia del tiempo transcurrido
-        segundo_ant = -2
-
         while True:
 
             # Obtener posicion del rival
-            players[1].set_position(self.get_changes())
+            changes = self.get_changes()
 
-            # Segundos transcurriendo de haber iniciado pygame
-            segundo_act = int(pygame.time.get_ticks()) // 1000
-            # Si la copia y los segundos actuales son diferentes
-            if segundo_act != segundo_ant:
-                segundo_ant = segundo_act
-                self.segundo += 1
-            #El contador global de segundos llega a 30 y reinicia la partida
-            if self.segundo == 45:
-                self.segundo = 0
-                self.send_restart()
-                self.loop()
+            if self.nro_player == "p1":
+                players[0].set_position(changes["change_p1"])
+                players[1].set_position(changes["change_p2"])
+            else:
+                players[0].set_position(changes["change_p2"])
+                players[1].set_position(changes["change_p1"])
 
             for event in pygame.event.get():
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
-                    self.delete_user()
                     self.delete_match()
                     exit()
 
@@ -111,7 +101,7 @@ class Game:
                         pos_player_pos[0] += -self.square_size
 
                         if players[0].verify_pos(pos_player_pos):
-                            self.set_change(players[0].get_pos_xy())
+                            self.update_change(players[0].get_pos_xy())
 
                     elif event.key == pygame.K_RIGHT:
 
@@ -119,7 +109,7 @@ class Game:
                         pos_player_pos[0] += self.square_size
 
                         if players[0].verify_pos(pos_player_pos):
-                            self.set_change(players[0].get_pos_xy())
+                            self.update_change(players[0].get_pos_xy())
 
                     elif event.key == pygame.K_UP:
 
@@ -127,13 +117,13 @@ class Game:
                         pos_player_pos[1] += -self.square_size
 
                         if players[0].verify_pos(pos_player_pos):
-                            self.set_change(players[0].get_pos_xy())
+                            self.update_change(players[0].get_pos_xy())
                     elif event.key == pygame.K_DOWN:
                         pos_player_pos = players[0].get_pos_xy()
                         pos_player_pos[1] += self.square_size
 
                         if players[0].verify_pos(pos_player_pos):
-                            self.set_change(players[0].get_pos_xy())
+                            self.update_change(players[0].get_pos_xy())
 
             # Fill background and draw game area
             self.display.fill(Config['colors']['green'])
@@ -162,12 +152,6 @@ class Game:
                     ]
                 )
 
-            if players[0].get_pos_xy() == posW:
-                self.score += 1
-                self.segundo = 0
-                self.send_winner()
-                self.loop()
-
             players[0].draw()
             players[1].draw()
             pointWin.draw()
@@ -183,14 +167,14 @@ class Game:
 
             title_rect = title.get_rect(
                 center=(
-                    self.width_able + (self.width_total - self.width_able)/2,
+                    self.width_able + (self.width_total - self.width_able) / 2,
                     100
                 )
             )
 
             score_rect = score.get_rect(
                 center=(
-                    self.width_able + (self.width_total - self.width_able)/2,
+                    self.width_able + (self.width_total - self.width_able) / 2,
                     200
                 )
             )
@@ -206,27 +190,24 @@ class Game:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            sock.send( "verify_multi".encode() )
-
-            time.sleep(1)
-
             datos = {
+                "comando": "verify_multi",
                 "user_s": self.user["user_s"],
-                "pass_s": self.user["pass_s"],
+                "pass_s": self.user["pass_s"]
             }
 
             datos_serial = json.dumps(datos)
             sock.sendall( datos_serial.encode() )
 
-            data = sock.recv(256).decode()
+            data = json.loads( sock.recv(256).decode() )
 
-            return data
+            return data["match"]
 
     # Cada 3 segundos ejecuta verify_multi, si se pasa de 60 segundos cierra el juego
     def verify_multi_out(self):
         count_seconds = 0
         self.num_match = self.verify_multi()
-        while self.num_match == "not_partner":
+        while self.num_match == -1:
             time.sleep(3)
             self.num_match = self.verify_multi()
             count_seconds += 3
@@ -238,14 +219,15 @@ class Game:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            sock.send( "create_posMulti".encode() )
+            datos = {
+                "comando": "create_posMulti",
+                "user_s": self.user["user_s"],
+                "match": self.num_match
+            }
 
-            time.sleep(1)
-
-            sock.sendall( str(self.num_match).encode() )
+            sock.sendall( (json.dumps(datos)).encode() )
 
             data_all = ""
-
             while True:
                 data = sock.recv(4096).decode()
                 if not data:
@@ -263,71 +245,51 @@ class Game:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            command = "get_change_" + self.nro_oponent + "_" + self.num_match
-            sock.send( command.encode())
-
-            data = sock.recv(256).decode()
-
-            # 2do player no sabe que termino partida
-            if data == "not_match":
-                self.delete_user()
-                exit()
-            else:
-                data_all = json.loads(data)
-
-            return data_all["change"]
-
-    # Modifica la posicion de jugador local
-    def set_change(self, change):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((HOST, PORT))
-
-            command = "update_change" + "_" + self.nro_player + "_" + self.num_match + "_" + str(change[0]) + "_" + str(change[1])
-            sock.send( command.encode())
-
-    # Borra la sesion activa en el servidor
-    def delete_user(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((HOST, PORT))
-
-            sock.send( "delete_user".encode() )
-            time.sleep(1)
-            sock.sendall( self.user["user_s"].encode() )
-
-    # Borra la partida activa en el servidor
-    def delete_match(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((HOST, PORT))
-
-            sock.send( "delete_match".encode() )
-            time.sleep(1)
-
-            sock.sendall( str(self.num_match).encode() )
-
-    # Envia si jugador local gana la partida actual y con ello otro laberinto
-    def send_winner(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((HOST, PORT))
-
-            sock.send( "send_winner".encode() )
-
-            time.sleep(1)
-
-            # num_match es string
             datos = {
-                "winner": self.user["user_s"],
+                "comando": "get_change",
+                "nro_player": self.nro_player,
                 "match": self.num_match
             }
 
             datos_serial = json.dumps(datos)
             sock.sendall( datos_serial.encode() )
 
-    def send_restart(self):
+            data = sock.recv(256).decode()
+
+            # Si se salio del juego el oponente
+            if data == "not_match":
+                exit()
+            # Si existio un reinicio por exceso de tiempo
+            elif data == "reboot":
+                self.loop()
+            else:
+                data_all = json.loads(data)
+                return data_all
+
+    # Modifica la posicion de jugador local
+    def update_change(self, change):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            sock.send( "send_restart".encode() )
+            datos = {
+                "comando": "update_change",
+                "nro_player": self.nro_player,
+                "match": self.num_match,
+                "change": [change[0], change[1]]
+            }
 
-            time.sleep(1)
+            datos_serial = json.dumps(datos)
+            sock.sendall( datos_serial.encode() )
 
-            sock.sendall( str(self.num_match).encode() )
+    # Borra la partida activa en el servidor
+    def delete_match(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            datos = {
+                "comando": "delete_match",
+                "match": self.num_match
+            }
+
+            datos_serial = json.dumps(datos)
+            sock.sendall( datos_serial.encode() )
