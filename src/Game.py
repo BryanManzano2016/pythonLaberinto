@@ -22,9 +22,9 @@ class Game:
         # Datos de juego
         self.display = display
         self.width_total = Config['game']['width']
-        self.width_able = Config['game']['width'] - Config['game']['bumper_size']*15
+        self.width_able = Config['game']['width'] - Config['game']['bumper_size'] * 10
         self.height_total = Config['game']['height']
-        self.height_able = Config['game']['height'] - Config['game']['bumper_size']
+        self.height_able = Config['game']['height'] - Config['game']['bumper_size'] * 2
         self.square_size = Config['game']['square_size']
 
         self.score = 0
@@ -129,20 +129,14 @@ class Game:
                         if players[0].verify_pos(pos_player_pos):
                             self.update_change(players[0].get_pos_xy())
 
-            # Fill background and draw game area
-            self.display.fill(Config['colors']['green'])
+            # Fondos e imagenes
+            picture_fondo = pygame.transform.scale(pygame.image.load('src/degradado_dark2.jpeg'),
+                                             (self.width_total, self.height_total))
+            self.display.blit(picture_fondo, (0, 0))
 
-            # Rectangulo blanco de juego
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['white'],
-                [
-                    self.square_size,
-                    self.square_size,
-                    self.width_able,
-                    self.height_able
-                ]
-            )
+            picture_fondo_play = pygame.transform.scale(pygame.image.load('src/degradado.png'),
+                                             (self.width_able, self.height_able))
+            self.display.blit(picture_fondo_play, (self.square_size, self.square_size))
             # Dibuja los cuadritos del laberinto
             picture = pygame.transform.scale(pygame.image.load('src/block_red.png'),
                                              (self.square_size, self.square_size))

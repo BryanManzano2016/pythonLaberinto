@@ -17,7 +17,6 @@ height_total = Config['game']['height']
 height_able = Config['game']['height'] - Config['game']['bumper_size'] * 2
 square_size = Config['game']['square_size']
 
-
 '''
 dual_player: partidas en modo multijugador
 users: usuarios activos
@@ -78,6 +77,10 @@ def positions_def2():
         positions.append(posObj)
         count_sq += 1
 
+    remove_append_near(posP, positions, positions_free)
+    remove_append_near(posP2, positions, positions_free)
+    remove_append_near(posW, positions, positions_free)
+
     # Añado la meta y las posiciones de partida de los jugadores para que sean accesibles
     positions_free.append(posP)
     positions_free.append(posP2)
@@ -120,6 +123,9 @@ def positions_def():
         positions.append(posObj)
         count_sq += 1
 
+    remove_append_near(posP, positions, positions_free)
+    remove_append_near(posW, positions, positions_free)
+
     positions_free.append(posP)
     positions_free.append(posW)
     # Dictionary to json format
@@ -130,6 +136,41 @@ def positions_def():
     }
 
     return datos
+
+# Despeja posiciones de jugadores y meta
+def remove_append_near(pos, positions_delete, positions_agg):
+
+    # bt: bottom, rg: right, lf:left, tp: top
+    bt_rg = [pos[0] + square_size, pos[1] + square_size ]
+    rg = [pos[0] + square_size, pos[1]]
+    bt = [pos[0], pos[1] + square_size]
+    bt_lt = [pos[0] + square_size, pos[1] - square_size]
+    tp_rg = [pos[0] - square_size, pos[1] + square_size]
+    lt = [pos[0], pos[1] - square_size]
+    tp = [pos[0] - square_size, pos[1]]
+    tp_lt = [pos[0] - square_size, pos[1] - square_size]
+
+    positions_agg.append(bt_rg)
+    positions_agg.append(rg)
+    positions_agg.append(bt)
+    positions_agg.append(bt_lt)
+    positions_agg.append(tp_rg)
+    positions_agg.append(lt)
+    positions_agg.append(tp)
+    positions_agg.append(tp_lt)
+
+    remove_element_exist(bt_rg, positions_delete)
+    remove_element_exist(rg, positions_delete)
+    remove_element_exist(bt, positions_delete)
+    remove_element_exist(bt_lt, positions_delete)
+    remove_element_exist(tp_rg, positions_delete)
+    remove_element_exist(lt, positions_delete)
+    remove_element_exist(tp, positions_delete)
+    remove_element_exist(tp_lt, positions_delete)
+
+def remove_element_exist(element_remove, list_all):
+    if element_remove in list_all:
+        list_all.remove(element_remove)
 
 # Verifica que el usuario no este en juego actualmente con la sesion del servidor
 def verify_match(user):

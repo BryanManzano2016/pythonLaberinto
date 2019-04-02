@@ -6,7 +6,7 @@ Config = {
         'fps': 30,
         'bumper_size': 30,
         'square_size': 20,
-        'number_squares': 250,
+        'number_squares': 400,
         'width_button': 300,
         'height_button': 100
     },
