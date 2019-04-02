@@ -27,7 +27,6 @@ class Game:
         self.height_able = Config['game']['height'] - Config['game']['bumper_size'] * 2
         self.square_size = Config['game']['square_size']
 
-        self.score = 0
         self.user = user_g
         self.num_match = match
         self.nro_player = None
@@ -80,13 +79,20 @@ class Game:
         while True:
 
             # Obtener posicion del rival
+            score_local = 0
+            score_oponent = 0
             changes = self.get_changes()
+
             if self.nro_player == "p1":
                 players[0].set_position(changes["change_p1"])
                 players[1].set_position(changes["change_p2"])
+                score_local = changes["p1_points"]
+                score_oponent = changes["p2_points"]
             else:
                 players[0].set_position(changes["change_p2"])
                 players[1].set_position(changes["change_p1"])
+                score_local = changes["p2_points"]
+                score_oponent = changes["p1_points"]
 
             for event in pygame.event.get():
                 # Si se sale del programa
@@ -151,12 +157,9 @@ class Game:
             # Initialize font and draw title and score text
             pygame.font.init()
 
-            font = pygame.font.SysFont(pygame.font.get_default_font(), 30)
+            font = pygame.font.SysFont(pygame.font.get_default_font(), 35)
 
-            score_text = 'Puntuacion: {}'.format(self.score)
-            score = font.render(score_text, False, Config['colors']['white'])
             title = font.render('LABERINTO', False, Config['colors']['white'])
-
             title_rect = title.get_rect(
                 center=(
                     self.width_able + (self.width_total - self.width_able) / 2,
@@ -164,14 +167,26 @@ class Game:
                 )
             )
 
-            score_rect = score.get_rect(
+            score_text = 'Local: {}'.format(score_local)
+            score_1 = font.render(score_text, False, Config['colors']['white'])
+            score_text_rect = score_1.get_rect(
                 center=(
                     self.width_able + (self.width_total - self.width_able) / 2,
                     200
                 )
             )
 
-            self.display.blit(score, score_rect)
+            score_text_2 = 'Oponent: {}'.format(score_oponent)
+            score_2 = font.render(score_text_2, False, Config['colors']['white'])
+            score_text_rect_2 = score_2.get_rect(
+                center=(
+                    self.width_able + (self.width_total - self.width_able) / 2,
+                    300
+                )
+            )
+
+            self.display.blit(score_1, score_text_rect)
+            self.display.blit(score_2, score_text_rect_2)
             self.display.blit(title, title_rect)
 
             pygame.display.update()

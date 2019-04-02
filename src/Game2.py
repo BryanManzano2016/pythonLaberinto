@@ -130,8 +130,6 @@ class Game2:
 
             font = pygame.font.SysFont(pygame.font.get_default_font(), 30)
 
-            score_text = 'Puntuacion: {}'.format(self.score)
-            score = font.render(score_text, False, Config['colors']['white'])
             title = font.render('LABERINTO', False, Config['colors']['white'])
 
             title_rect = title.get_rect(
@@ -140,6 +138,9 @@ class Game2:
                     100
                 )
             )
+
+            score_text = 'Score: {}'.format(self.score)
+            score = font.render(score_text, False, Config['colors']['white'])
 
             score_rect = score.get_rect(
                 center=(

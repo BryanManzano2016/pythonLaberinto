@@ -32,6 +32,8 @@ class Menu_play:
 
         self.num_match = None
 
+        self.mensaje = ""
+
         self.menu_main()
 
     def menu_main(self):
@@ -71,20 +73,9 @@ class Menu_play:
                               mouse,
                               click)
 
-            # Fill background and draw game area
-            self.display.fill(Config['colors']['green'])
-
-            # Rectangulo blanco para play
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['white'],
-                [
-                    (self.width_total / 2) - self.width_button,
-                    (self.height_total / 4) - self.height_button,
-                    self.width_button * 2,
-                    self.height_button
-                ]
-            )
+            picture_fondo = pygame.transform.scale(pygame.image.load('src/degradado_dark2.jpeg'),
+                                             (self.width_total, self.height_total))
+            self.display.blit(picture_fondo, (0, 0))
 
             # Rectangulo para boton play
             pygame.draw.rect(
@@ -112,18 +103,6 @@ class Menu_play:
                 )
             )
 
-            # Rectangulo blanco para multiplayer
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['white'],
-                [
-                    (self.width_total / 2) - self.width_button,
-                    (self.height_total / 2) - self.height_button,
-                    self.width_button * 2,
-                    self.height_button
-                ]
-            )
-
             # Rectangulo azul para boton multiplayer
             pygame.draw.rect(
                 self.display,
@@ -145,8 +124,17 @@ class Menu_play:
                 )
             )
 
-            self.display.blit(multiplayer_text, multiplayer_text_rect)
+            mensaje_t = '{}'.format(self.mensaje)
+            mensaje_text = font.render(mensaje_t, False, Config['colors']['white'])
+            mensaje_text_rect = mensaje_text.get_rect(
+                center=(
+                    (self.width_total / 2) - (self.width_button / 2) + 150,
+                    (self.height_total / 2) + self.height_button + 100
+                )
+            )
 
+            self.display.blit(mensaje_text, mensaje_text_rect)
+            self.display.blit(multiplayer_text, multiplayer_text_rect)
             self.display.blit(play_text, play_text_rect)
 
             pygame.display.update()
@@ -224,15 +212,14 @@ class Menu_play:
         self.num_match = self.verify_multi()
         # -1 significa que no llega oponente, no hay 2 jugadores en la partida
         while self.num_match == -1:
-
-            time.sleep(3)
+            time.sleep(1)
             self.num_match = self.verify_multi()
-            count_seconds += 3
+            count_seconds += 1
             #Reinicia la pantalla y elimina la partida que creo
             if count_seconds > 60:
+                self.mensaje = "No hubo rival"
                 self.menu_main()
                 self.delete_match_2()
-                print("reinicio")
 
     # Borra el usuario en linea
     def delete_user(self):

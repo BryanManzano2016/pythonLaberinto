@@ -45,20 +45,9 @@ class Menu_play:
                               mouse,
                               click)
 
-            # Fill background and draw game area
-            self.display.fill(Config['colors']['green'])
-
-            # Rectangulo blanco para play
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['white'],
-                [
-                    (self.width_total / 2) - self.width_button,
-                    (self.height_total / 4) - self.height_button,
-                    self.width_button * 2,
-                    self.height_button
-                ]
-            )
+            picture_fondo = pygame.transform.scale(pygame.image.load('src/degradado_dark2.jpeg'),
+                                             (self.width_total, self.height_total))
+            self.display.blit(picture_fondo, (0, 0))
 
             # Rectangulo para boton play
             pygame.draw.rect(

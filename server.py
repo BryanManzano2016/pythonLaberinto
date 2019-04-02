@@ -43,7 +43,7 @@ class myThread (threading.Thread):
                     player_t["p2_c"] = p2_c2
                     player_t["positions_m"] = positions_m1
                     player_t["restart"] = 2
-                    player["last_restart"] = ""
+                    player_t["last_restart"] = ""
                 else:
                     player_t["seconds"] += 1
             time.sleep(1)
@@ -369,8 +369,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     # Diccionario para enviar la posicion del oponente
                     dict_change = {
                         "change_p1": None,
-                        "change_p2": None
+                        "change_p2": None,
+                        "p1_points": player["p1_points"],
+                        "p2_points": player["p2_points"]
                     }
+
                     # No dice que no existe la partida
                     not_found_match = False
                     # Si restart es 1 o 2 y el ultimo que ingreso no es el mismo que trata de entrar otra vez
@@ -480,7 +483,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 print(x["p1"], "___", x["p2"])
             print("-" * 50)
             '''
-            '''
+            ''' Mostrar informacion de las partidas
             if recv_json["comando"] != "get_change" and recv_json["comando"] != "update_change":
                 print(users)
                 print(len(dual_player))
@@ -491,4 +494,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         print(pl["p1"], " ,", pl["p1_c"], " ,", pl["p1_points"])
                         print(pl["p2"], " ,", pl["p2_c"], " ,", pl["p2_points"])
                 print("-" * 50)
+            '''
+            ''' Reiniciar tabla de mongoDB
+            myclient = pymongo.MongoClient('mongodb://localhost:27017/')
+            mydb = myclient['players_laberinto']
+            collection_mg = mydb["multi_game"]
+            
+            x = collection_mg.delete_many({})
             '''

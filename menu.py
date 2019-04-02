@@ -32,13 +32,16 @@ class Menu:
         self.height_button = Config['game']['height_button']
         self.width_button = Config['game']['width_button']
 
+        self.mensaje = ""
+        self.textinput = pygame_textinput.TextInput()
+
+
         self.menu_main()
 
     def menu_main(self):
 
         clock = pygame.time.Clock()
         # Input inicializado
-        textinput = pygame_textinput.TextInput()
 
         while True:
 
@@ -67,34 +70,20 @@ class Menu:
                               click,
                               "0")
 
-                data_u = textinput.get_text()
-                user_pass = data_u.split(",")
-
-                if len(user_pass) != 2:
-                    continue
+                data_u = self.textinput.get_text()
 
                 self.buttons_click((self.width_total / 2) - (self.width_button / 2),
-                    (self.height_total / 2) + self.height_button,
+                    (self.height_total / 2) + self.height_button - 100,
                     self.width_button,
                     50,
                     mouse,
                     click,
                     data_u)
 
-            # Fill background and draw game area
-            self.display.fill(Config['colors']['green'])
+            picture_fondo = pygame.transform.scale(pygame.image.load('src/degradado_dark2.jpeg'),
+                                             (self.width_total, self.height_total))
+            self.display.blit(picture_fondo, (0, 0))
 
-            # Rectangulo blanco para invitado
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['white'],
-                [
-                    (self.width_total / 2) - self.width_button,
-                    (self.height_total / 4) - self.height_button,
-                    self.width_button * 2,
-                    self.height_button
-                ]
-            )
             # Rectangulo para boton invitado
             pygame.draw.rect(
                 self.display,
@@ -107,24 +96,13 @@ class Menu:
                 ]
             )
 
-            # Rectangulo blanco para login
-            pygame.draw.rect(
-                self.display,
-                Config['colors']['white'],
-                [
-                    (self.width_total / 2) - self.width_button,
-                    (self.height_total / 2)  - self.height_button,
-                    self.width_button * 2,
-                    self.height_button * 3
-                ]
-            )
             # Rectangulo azul para datos
             pygame.draw.rect(
                 self.display,
                 Config['colors']['blue'],
                 [
                     (self.width_total / 2) - self.width_button,
-                    (self.height_total / 2) + 25,
+                    (self.height_total / 2) - 75,
                     self.width_button * 2,
                     50
                 ]
@@ -136,7 +114,7 @@ class Menu:
                 Config['colors']['blue'],
                 [
                     (self.width_total / 2) - (self.width_button / 2),
-                    (self.height_total / 2)  + self.height_button,
+                    (self.height_total / 2)  + self.height_button - 100,
                     self.width_button,
                     50
                 ]
@@ -161,14 +139,14 @@ class Menu:
             datos_text_rect = login_text.get_rect(
                 center=(
                     (self.width_total / 2) - 60,
-                    (self.height_total / 2) + self.height_button - 100,
+                    (self.height_total / 2) + self.height_button - 200,
                 )
             )
 
             login_text_rect = login_text.get_rect(
                 center=(
                     (self.width_total / 2) + 10,
-                    (self.height_total / 2) + self.height_button + 25,
+                    (self.height_total / 2) + self.height_button - 75,
                 )
             )
 
@@ -177,11 +155,20 @@ class Menu:
             self.display.blit(login_text, login_text_rect)
 
             # Muestra input
-            self.display.blit(textinput.get_surface(), ( (self.width_total / 2) - (self.width_button / 2),
-                (self.height_total / 2) + 35) )
+            self.display.blit(self.textinput.get_surface(), ( (self.width_total / 2) - (self.width_button / 2),
+                (self.height_total / 2) - 65) )
 
-            textinput.update(events)
+            mensaje_t = '{}'.format(self.mensaje)
+            mensaje_text = font.render(mensaje_t, False, Config['colors']['white'])
+            mensaje_text_rect = mensaje_text.get_rect(
+                center=(
+                    (self.width_total / 2) - (self.width_button / 2) + 150,
+                    (self.height_total / 2) + self.height_button + 100
+                )
+            )
+            self.display.blit(mensaje_text, mensaje_text_rect)
 
+            self.textinput.update(events)
             pygame.display.update()
             clock.tick(5)
 
@@ -190,19 +177,47 @@ class Menu:
 
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
+            user_pass = data.split(",")
+
             if click[0] == 1 and data == "0":
                 print("----")
                 menu_play3.Menu_play(self.display)
 
             elif click[0] == 1 and data != "":
 
-                if verificar_user(data):
+                if self.verificar_user(data) and len(user_pass) == 2:
                     # Añadir al usuario al servidor mientras dura la conexion
-                    time.sleep(1)
                     user_name = player_dict(data)
                     append_user( user_name["user_s"] )
-                    time.sleep(1)
                     menu_play.Menu_play(self.display, data)
+
+            elif len(user_pass) != 2:
+                self.mensaje = "Formato user/pass no valido"
+
+    # Verifica que el player no este en linea y si esta en la BD
+    def verificar_user(self, data):
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            user = player_dict(data)
+
+            datos = {
+                "comando": "verify_user",
+                "user_s": user["user_s"],
+                "pass_s": user["pass_s"]
+            }
+
+            datos_serial = json.dumps(datos)
+            sock.sendall(datos_serial.encode())
+
+            data_all = sock.recv(256).decode()
+
+            if data_all == "ok":
+                return True
+            else:
+                self.mensaje = "No es posible entrar (Usuario ya en linea o datos incorrectos)"
+                return False
 
 # Diccionario de datos para login
 def player_dict(data_st):
@@ -213,30 +228,6 @@ def player_dict(data_st):
         "pass_s" : user_pass[1]
     }
     return user
-
-# Verifica que el player no este en linea y si esta en la BD
-def verificar_user(data):
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect((HOST, PORT))
-
-        user = player_dict(data)
-
-        datos = {
-            "comando": "verify_user",
-            "user_s": user["user_s"],
-            "pass_s": user["pass_s"]
-        }
-
-        datos_serial = json.dumps(datos)
-        sock.sendall(datos_serial.encode())
-
-        data_all = sock.recv(256).decode()
-
-        if data_all == "ok":
-            return True
-        else:
-            return False
 
 # user_st: nombre de usuario a añadir en cadena
 def append_user(user_st):
