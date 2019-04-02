@@ -49,10 +49,11 @@ def view_record(from_clt):
 
 def set_result(player_1, player_2, resultado):
 
+    # Si no existe en la base de datos validar es igual a False
     validar = False
     # Datos para conexion
     collection_mg = mydb["multi_game"]
-
+    # Son los nombres de los records de cada player, llave_n es la llave del ganador
     llave_1 = "record_" + player_1
     llave_2 = "record_" + player_2
     llave_n = "record_" + resultado
@@ -60,35 +61,36 @@ def set_result(player_1, player_2, resultado):
     # Leer los jugadores de la base de datos y validar si ya esta lo requerido
     for game in collection_mg.find():
 
-        points = game[llave_n]
-        # users estan
-        if player_1 == game["player_1"] and player_2 == game["player_2"]:
-
-            myquery = {"player_1": player_1, "player_2": player_2}
-            newvalues = {"$set": {"llave_n": points + 1}}
-            collection_mg.update_one(myquery, newvalues)
-            print(game)
-            validar = True
-
-        elif player_2 == game["player_1"] and player_1 == game["player_2"]:
-
-            myquery = {"player_1": player_2, "player_2": player_1}
-            newvalues = {"$set": {"llave_n": points + 1}}
-            collection_mg.update_one(myquery, newvalues)
-            print(game)
+        options_1 = player_1 == game["player_1"] and player_2 == game["player_2"]
+        options_2 = player_1 == game["player_2"] and player_2 == game["player_1"]
+        # users no estan
+        if  not options_1 and not options_2:
+            continue
+        elif options_1 or options_2:
+            # Puntos del ganador
+            points = game[llave_n]
+            ''' Que el jugador 1 sea player_1 en la base de datos, sino cuando los mismos jugadores inicien en defiferente orden el juego
+            se crearia otro registro '''
+            if options_1:
+                # Update
+                myquery = {"player_1": player_1, "player_2": player_2, llave_n: points}
+                newvalues = {"$set": {llave_n: points + 1}}
+                collection_mg.update_one(myquery, newvalues)
+            elif options_2:
+                myquery = {"player_1": player_2, "player_2": player_1, llave_n: points}
+                newvalues = {"$set": {llave_n: points + 1}}
+                collection_mg.update_one(myquery, newvalues)
+            # Ya no es 1era vez
             validar = True
 
     if not validar:
         if player_1 == resultado:
-            mydict = {"player_1": player_1, "player_2": player_1, llave_1: 1, llave_2: 0}
-            collection_mg.insert_one(mydict)
-            print(player_1)
-            print("player 1 gano")
+            # Insert dependiendo del ganador
+            mydict = {"player_1": player_1, "player_2": player_2, llave_1: 1, llave_2: 0}
+            x = collection_mg.insert_one(mydict)
         elif player_2 == resultado:
-            mydict = {"player_1": player_1, "player_2": player_1, llave_1: 0, llave_2: 1}
-            collection_mg.insert_one(mydict)
-            print(player_2)
-            print("player 2 gano")
+            mydict = {"player_1": player_1, "player_2": player_2, llave_1: 0, llave_2: 1}
+            x = collection_mg.insert_one(mydict)
 
 
 

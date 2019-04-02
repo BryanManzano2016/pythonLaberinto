@@ -397,11 +397,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     elif player["match"] == recv_json["match"]:
 
                         if player["p1_points"] > player["p2_points"]:
-                            pass
-                            # conn_mongo.set_result(player["p1"], player["p2"], player["p1"])
+                            # ( p1, p2, winner )
+                            conn_mongo.set_result(player["p1"], player["p2"], player["p1"])
                         if player["p1_points"] < player["p2_points"]:
-                            pass
-                            # conn_mongo.set_result(player["p1"], player["p2"], player["p2"])
+                            conn_mongo.set_result(player["p2"], player["p1"], player["p2"])
 
                         # Elimina de los usuarios a los 2 si existen y a la partida
                         if player["p1"] in users:
@@ -433,11 +432,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 if recv_json["user_s"] in users:
                     users.remove(recv_json["user_s"])
 
-            print(users)
+            ''' view users and matches
+            print(users)    
             for x in dual_player:
                 print(x["p1"], "___", x["p2"])
             print("-" * 50)
-
+            '''
             '''
             if recv_json["comando"] != "get_change" and recv_json["comando"] != "update_change":
                 print(users)
