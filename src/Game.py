@@ -66,8 +66,8 @@ class Game:
             self.user_oponent = posit["p1"]
 
         #Creacion y ubicacion de jugadores y meta
-        player_1 = Player(self.display, posP, positions_free)
-        player_2 = Player(self.display, posP2, positions_free)
+        player_1 = Player(self.display, posP, positions_free, self.nro_player)
+        player_2 = Player(self.display, posP2, positions_free, self.nro_oponent)
 
         posW = posit["positions_m"]["pos"][2]
         pointWin = PointWin(self.display, posW)
@@ -144,17 +144,11 @@ class Game:
                 ]
             )
             # Dibuja los cuadritos del laberinto
+            picture = pygame.transform.scale(pygame.image.load('src/block_red.png'),
+                                             (self.square_size, self.square_size))
             for x in positions:
-                pygame.draw.rect(
-                    self.display,
-                    Config['colors']['black'],
-                    [
-                        x[0],
-                        x[1],
-                        self.square_size,
-                        self.square_size
-                    ]
-                )
+                self.display.blit(picture, (x[0], x[1]))
+
             # Dibuja los jugadores
             players[0].draw()
             players[1].draw()

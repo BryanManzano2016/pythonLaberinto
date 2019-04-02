@@ -3,23 +3,20 @@ import pygame
 from src.Config import Config
 
 class Player:
-    def __init__(self, display, posP, pos):
+    def __init__(self, display, posP, pos, player="p1"):
         self.x_pos = posP[0]
         self.y_pos = posP[1]
         self.pos_free = pos
         self.display = display
+        if player == "p1":
+            self.path_img = "src/pykachu.png"
+        else:
+            self.path_img = "src/duck.png"
+        self.picture = pygame.transform.scale(pygame.image.load(self.path_img), (Config['game']['square_size'],
+                                                        Config['game']['square_size'],))
 
     def draw(self):
-        pygame.draw.rect(
-            self.display,
-            Config['colors']['blue'],
-            [
-                self.x_pos,
-                self.y_pos,
-                Config['game']['square_size'],
-                Config['game']['square_size']
-            ]
-        )
+        self.display.blit(self.picture, (self.x_pos, self.y_pos))
 
     def verify_pos(self, pos_possible):
         if pos_possible in self.pos_free:

@@ -112,17 +112,10 @@ class Game2:
                 ]
             )
 
+            picture = pygame.transform.scale(pygame.image.load('src/block_red.png'),
+                                             (self.square_size, self.square_size))
             for x in positions:
-                pygame.draw.rect(
-                    self.display,
-                    Config['colors']['black'],
-                    [
-                        x[0],
-                        x[1],
-                        self.square_size,
-                        self.square_size
-                    ]
-                )
+                self.display.blit(picture, (x[0], x[1]))
 
             # range tiene 1 porque solo hay 1 jugador en players
             for playerN in range(1):

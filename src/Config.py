@@ -2,11 +2,11 @@ Config = {
     'game': {
         'caption': 'Laberinto',
         'height': 680,
-        'width': 980,
+        'width': 1180,
         'fps': 30,
         'bumper_size': 30,
-        'square_size': 10,
-        'number_squares': 500,
+        'square_size': 20,
+        'number_squares': 250,
         'width_button': 300,
         'height_button': 100
     },

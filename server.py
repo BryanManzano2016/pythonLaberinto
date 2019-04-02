@@ -12,10 +12,11 @@ PORT = 60000
 
 # Data of settings
 width_total = Config['game']['width']
-width_able = Config['game']['width'] - Config['game']['bumper_size'] * 15
+width_able = Config['game']['width'] - Config['game']['bumper_size'] * 10
 height_total = Config['game']['height']
-height_able = Config['game']['height'] - Config['game']['bumper_size'] * 1
+height_able = Config['game']['height'] - Config['game']['bumper_size'] * 2
 square_size = Config['game']['square_size']
+
 
 '''
 dual_player: partidas en modo multijugador
