@@ -165,6 +165,7 @@ class Game2:
             pygame.display.update()
             clock.tick(Config['game']['fps'])
 
+    # Envia puntuacion al momento de cerrar el juego
     def send_record(self):
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -179,7 +180,6 @@ class Game2:
 
             datos_serial = json.dumps(datos)
             sock.sendall(datos_serial.encode())
-
 
     def delete_user(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

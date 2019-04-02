@@ -131,8 +131,8 @@ def positions_def():
     return datos
 
 # Verifica que el usuario no este en juego actualmente con la sesion del servidor
-def verify_match(dicts, user):
-    for dt in dicts:
+def verify_match(user):
+    for dt in dual_player:
         if user == dt["p1"] or user == dt["p2"]:
             return True
         else:
@@ -164,7 +164,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 }
 
                 validar = conn_mongo.view_user(from_clt)
-                validar2 = verify_match(dual_player, from_clt["user_s"])
+                validar2 = verify_match(from_clt["user_s"])
                 validar3 = False
 
                 for element in users:
@@ -204,6 +204,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
             # Enlaza jugadores en multiplayer y crea los parametros del laberinto inicial
             elif recv_json["comando"] == "connect_players":
+
+                if verify_match( recv_json["user_s"] ):
+                    continue
 
                 # Añado una lista (datos de partida) en la lista dual_player, si esta vacia
                 if len(dual_player) == 0:
@@ -275,6 +278,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                 for player in dual_player:
 
+                    # Tienen que estar los 2 jugadores
                     if player["p1"] is None or player["p2"] is None:
                         continue
 
@@ -330,7 +334,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     # Si restart es 1 o 2 y el ultimo que ingreso no es el mismo que trata de entrar otra vez
                     if player["last_restart"] != recv_json["nro_player"] and (player["restart"] == 2 or player["restart"] == 1):
                         conn.sendall("reboot".encode())
-                        print("reboot last_restart")
                         player["restart"] -= 1
                         player["seconds"] = 0
                         player["last_restart"] = recv_json["nro_player"]
@@ -344,7 +347,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 # Le envia que ya no existe la partida, el oponente cierra
                 if not_found_match:
                     conn.sendall( "not_match".encode())
-                    print("not match")
 
             # Actualiza la posicion del jugador, si gana reinicia el laberinto
             elif recv_json["comando"] == "update_change":
@@ -401,14 +403,40 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                             pass
                             # conn_mongo.set_result(player["p1"], player["p2"], player["p2"])
 
-                        users.remove(player["p1"])
-                        users.remove(player["p2"])
+                        # Elimina de los usuarios a los 2 si existen y a la partida
+                        if player["p1"] in users:
+                            users.remove(player["p1"])
+                        if player["p2"] in users:
+                            users.remove(player["p2"])
+
                         dual_player.remove(player)
+
                         break
 
-            # Uso de modo user para login
+            # Con solo el nombre de un jugador elimina la partida
+            elif recv_json["comando"] == "delete_match2":
+
+                data_all = conn.recv(256).decode()
+                for player in dual_player:
+
+                    if player["p1"] is None and player["p2"] is None:
+                        continue
+
+                    elif player["p1"] == recv_json["user_s"] or player["p2"] == recv_json["user_s"]:
+
+                        dual_player.remove(player)
+
+                        break
+
+            # Uso de modo user para login, esta en menu_play y Game2
             elif recv_json["comando"] == "delete_user":
-                users.remove(recv_json["user_s"])
+                if recv_json["user_s"] in users:
+                    users.remove(recv_json["user_s"])
+
+            print(users)
+            for x in dual_player:
+                print(x["p1"], "___", x["p2"])
+            print("-" * 50)
 
             '''
             if recv_json["comando"] != "get_change" and recv_json["comando"] != "update_change":
@@ -422,4 +450,3 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         print(pl["p2"], " ,", pl["p2_c"], " ,", pl["p2_points"])
                 print("-" * 50)
             '''
-

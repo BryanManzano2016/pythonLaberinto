@@ -165,7 +165,7 @@ def lists():
         sock.connect((HOST, PORT))
 
         datos = {
-            "comando": "create_pos",
+            "comando": "create_pos"
         }
 
         datos_serial = json.dumps(datos)

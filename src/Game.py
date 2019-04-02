@@ -4,7 +4,6 @@ from src.PointWin import PointWin
 from src.Config import Config
 import socket
 import json
-import time
 
 # Modo multijugador
 HOST = '192.168.100.133'
@@ -19,7 +18,7 @@ user_oponent: nombre de usuario de oponente
 '''
 class Game:
 
-    def __init__(self, display, user_g):
+    def __init__(self, display, user_g, match):
         # Datos de juego
         self.display = display
         self.width_total = Config['game']['width']
@@ -30,14 +29,13 @@ class Game:
 
         self.score = 0
         self.user = user_g
-        self.num_match = None
+        self.num_match = match
         self.nro_player = None
         self.nro_oponent = None
         self.user_player = None
         self.user_oponent = None
 
         # Verifico el numero de partida durante un lapso de tiempo
-        self.verify_multi_out()
         self.loop()
 
     def loop(self):
@@ -190,36 +188,6 @@ class Game:
 
             pygame.display.update()
             clock.tick(Config['game']['fps'])
-
-    # Retorna el nro de partida
-    def verify_multi(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((HOST, PORT))
-            # Envia un objeto serializado atraves de sockets
-            datos = {
-                "comando": "verify_multi",
-                "user_s": self.user["user_s"],
-                "pass_s": self.user["pass_s"]
-            }
-            datos_serial = json.dumps(datos)
-            sock.sendall( datos_serial.encode() )
-
-            # Recibe un objeto serializado atraves de sockets
-            data = json.loads( sock.recv(256).decode() )
-
-            return data["match"]
-
-    # Cada 3 segundos ejecuta verify_multi, si se pasa de 60 segundos cierra el juego
-    def verify_multi_out(self):
-        count_seconds = 0
-        self.num_match = self.verify_multi()
-        # -1 significa que no llega oponente
-        while self.num_match == -1:
-            time.sleep(3)
-            self.num_match = self.verify_multi()
-            count_seconds += 3
-            if count_seconds > 60:
-                exit(0)
 
     # Data de la partida
     def lists(self):

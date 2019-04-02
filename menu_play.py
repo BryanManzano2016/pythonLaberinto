@@ -1,4 +1,3 @@
-import pygame
 from src import Config
 from src.Game import *
 from src.Game2 import *
@@ -6,6 +5,10 @@ from src.Game3 import *
 
 '''
 -Se observaran los botones de play y multijugador
+
+Utiliza los metodos del servidor:  
+    Borrar un usuario del servidor, en caso de que salga
+    Borrar una partida en caso de que la cree y no reciba respuestas
 '''
 
 HOST = '192.168.100.133'
@@ -25,6 +28,9 @@ class Menu_play:
         self.width_button = Config['game']['width_button']
 
         self.data = data
+        self.user = self.player_dict()
+
+        self.num_match = None
 
         self.menu_main()
 
@@ -40,6 +46,7 @@ class Menu_play:
                 # Si se sale del programa
                 if event.type == pygame.QUIT:
                     self.delete_user()
+                    self.delete_match_2()
                     exit()
 
                 # Si se presiona una tecla
@@ -151,16 +158,22 @@ class Menu_play:
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
             if click[0] == 1:
+
                 # Intenta conectar 2 jugadores
                 self.connect_player()
-                Game(self.display, self.player_dict())
+                # Si la partida no tiene 2 jugadores, se elimina la partida creada y la pantalla se refresca
+                self.verify_multi_out()
+
+                Game(self.display, self.user, self.num_match)
 
     def buttons_click_i(self, x, y, wd, hg, mouse, click):
 
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
             if click[0] == 1:
-                Game2(self.display, self.player_dict())
+                # Solo borra partida no usuario en linea
+                self.delete_match_2()
+                Game2(self.display, self.user)
 
     def player_dict(self):
         # Extrae la data del self.user
@@ -171,23 +184,57 @@ class Menu_play:
         }
         return user
 
-    # Envia peticion para jugar multiplayer
+    # Envia peticion para jugar multiplayer, esto crea una partida o actualiza un jugador nulo de una existen
     def connect_player(self):
-
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
 
-            user = self.player_dict()
-
             datos = {
                 "comando": "connect_players",
-                "user_s": user["user_s"],
-                "pass_s": user["user_s"]
+                "user_s": self.user["user_s"]
             }
 
             datos_serial = json.dumps(datos)
             sock.sendall(datos_serial.encode())
 
+    # Retorna el nro de partida, -1 si no existe
+    def verify_multi(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            # Envia un objeto serializado atraves de sockets
+            datos = {
+                "comando": "verify_multi",
+                "user_s": self.user["user_s"],
+                "pass_s": self.user["pass_s"]
+            }
+
+            datos_serial = json.dumps(datos)
+            sock.sendall( datos_serial.encode() )
+
+            # Recibe un objeto serializado atraves de sockets
+            data = json.loads( sock.recv(256).decode() )
+
+            return data["match"]
+
+    # Cada 3 segundos ejecuta verify_multi, si se pasa de 60 segundos cierra el juego
+    def verify_multi_out(self):
+
+        count_seconds = 0
+        self.num_match = self.verify_multi()
+        # -1 significa que no llega oponente, no hay 2 jugadores en la partida
+        while self.num_match == -1:
+
+            time.sleep(3)
+            self.num_match = self.verify_multi()
+            count_seconds += 3
+            #Reinicia la pantalla y elimina la partida que creo
+            if count_seconds > 60:
+                self.menu_main()
+                self.delete_match_2()
+                print("reinicio")
+
+    # Borra el usuario en linea
     def delete_user(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT))
@@ -201,3 +248,18 @@ class Menu_play:
 
             datos_serial = json.dumps(datos)
             sock.sendall(datos_serial.encode())
+
+    # Borra la partida activa en el servidor
+    def delete_match_2(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((HOST, PORT))
+
+            user_name = self.player_dict()
+
+            datos = {
+                "comando": "delete_match2",
+                "user_s": user_name["user_s"]
+            }
+
+            datos_serial = json.dumps(datos)
+            sock.sendall( datos_serial.encode() )

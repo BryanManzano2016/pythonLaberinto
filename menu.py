@@ -9,7 +9,11 @@ import time
 
 '''
 Boton invitado: Solo puede jugar partidas only-player 
-Boton multijugador: Ingresa user-password y puede jugar only-player o multijugador 
+Boton multijugador: Ingresa user-password y puede jugar only-player o multijugador
+
+Utiliza los metodos del servidor:  
+    Añadir un jugador al inicio
+    Verificar que la cuenta exista en la BD y no este actualmente en linea
 '''
 
 HOST = '192.168.100.133'
@@ -55,11 +59,6 @@ class Menu:
                 mouse = pygame.mouse.get_pos()
                 click = pygame.mouse.get_pressed()
 
-                data_u = textinput.get_text()
-                user_pass = data_u.split(",")
-                if len(user_pass) != 2:
-                    continue
-
                 self.buttons_click((self.width_total / 2) - (self.width_button / 2),
                               (self.height_total / 4) - (self.height_button / 1.5),
                               self.width_button,
@@ -67,6 +66,12 @@ class Menu:
                               mouse,
                               click,
                               "0")
+
+                data_u = textinput.get_text()
+                user_pass = data_u.split(",")
+
+                if len(user_pass) != 2:
+                    continue
 
                 self.buttons_click((self.width_total / 2) - (self.width_button / 2),
                     (self.height_total / 2) + self.height_button,
@@ -186,9 +191,11 @@ class Menu:
         if x + wd > mouse[0] > x and y + hg > mouse[1] > y:
 
             if click[0] == 1 and data == "0":
+                print("----")
                 menu_play3.Menu_play(self.display)
 
             elif click[0] == 1 and data != "":
+
                 if verificar_user(data):
                     # Añadir al usuario al servidor mientras dura la conexion
                     time.sleep(1)
@@ -197,6 +204,7 @@ class Menu:
                     time.sleep(1)
                     menu_play.Menu_play(self.display, data)
 
+# Diccionario de datos para login
 def player_dict(data_st):
     # Extrae la data del self.user
     user_pass = data_st.split(",")
@@ -206,6 +214,7 @@ def player_dict(data_st):
     }
     return user
 
+# Verifica que el player no este en linea y si esta en la BD
 def verificar_user(data):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
